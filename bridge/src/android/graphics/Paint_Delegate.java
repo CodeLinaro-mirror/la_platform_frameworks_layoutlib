@@ -37,6 +37,7 @@ import java.awt.geom.AffineTransform;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -145,6 +146,7 @@ public class Paint_Delegate {
 
         List<FontInfo> infoList = StreamSupport.stream(typeface.getFonts(mFontVariant).spliterator
                 (), false)
+                .filter(Objects::nonNull)
                 .map(font -> getFontInfo(font, mTextSize, affineTransform))
                 .collect(Collectors.toList());
         mFonts = Collections.unmodifiableList(infoList);
@@ -1032,7 +1034,7 @@ public class Paint_Delegate {
     }
 
     @LayoutlibDelegate
-    /*package*/ static void nGetCharArrayBounds(long nativePaint, char[] text, int index,
+    public static void nGetCharArrayBounds(long nativePaint, char[] text, int index,
             int count, int bidiFlags, Rect bounds) {
 
         // get the delegate from the native int.

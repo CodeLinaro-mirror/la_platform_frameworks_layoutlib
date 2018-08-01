@@ -27,10 +27,8 @@ import com.android.layout.remote.api.RemoteILayoutPullParser;
 import com.android.layout.remote.api.RemoteLayoutlibCallback;
 import com.android.layout.remote.api.RemoteParserFactory;
 import com.android.layout.remote.api.RemoteXmlPullParser;
-import com.android.resources.ResourceType;
 import com.android.tools.layoutlib.annotations.NotNull;
 import com.android.tools.layoutlib.annotations.Nullable;
-import com.android.util.Pair;
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -58,8 +56,7 @@ public class RemoteLayoutlibCallbackAdapter implements RemoteLayoutlibCallback {
     }
 
     @Override
-    public Object loadView(String name, Class[] constructorSignature, Object[] constructorArgs)
-            throws Exception {
+    public Object loadView(String name, Class[] constructorSignature, Object[] constructorArgs) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
@@ -69,20 +66,13 @@ public class RemoteLayoutlibCallbackAdapter implements RemoteLayoutlibCallback {
     }
 
     @Override
-    public RemoteResolveResult resolveResourceId(int id) {
-        Pair<ResourceType, String> result = mDelegate.resolveResourceId(id);
-        return result != null ? new RemoteResolveResult(result.getFirst(), result.getSecond()) :
-                null;
-    }
-
-    @Override
-    public String resolveResourceId(int[] id) {
+    public ResourceReference resolveResourceId(int id) {
         return mDelegate.resolveResourceId(id);
     }
 
     @Override
-    public Integer getResourceId(ResourceType type, String name) {
-        return mDelegate.getResourceId(type, name);
+    public int getOrGenerateResourceId(ResourceReference resource) {
+        return mDelegate.getOrGenerateResourceId(resource);
     }
 
     @Override
@@ -149,9 +139,18 @@ public class RemoteLayoutlibCallbackAdapter implements RemoteLayoutlibCallback {
     }
 
     @Override
-    public RemoteXmlPullParser getXmlFileParser(String fileName) {
+    public RemoteXmlPullParser getXmlParserForPsiFile(String fileName) {
         try {
-            return RemoteXmlPullParserAdapter.create(mDelegate.getXmlFileParser(fileName));
+            return RemoteXmlPullParserAdapter.create(mDelegate.getXmlParserForPsiFile(fileName));
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public RemoteXmlPullParser getXmlParserForFile(String fileName) {
+        try {
+            return RemoteXmlPullParserAdapter.create(mDelegate.getXmlParserForFile(fileName));
         } catch (RemoteException e) {
             throw new RuntimeException(e);
         }

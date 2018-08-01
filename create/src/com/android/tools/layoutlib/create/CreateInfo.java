@@ -72,7 +72,7 @@ public final class CreateInfo implements ICreateInfo {
     }
 
     @Override
-    public Set<String> getExcludedClasses() {
+    public String[] getExcludedClasses() {
         String[] refactoredClasses = getJavaPkgClasses();
         int count = refactoredClasses.length / 2 + EXCLUDED_CLASSES.length;
         Set<String> excludedClasses = new HashSet<>(count);
@@ -80,7 +80,7 @@ public final class CreateInfo implements ICreateInfo {
             excludedClasses.add(refactoredClasses[i]);
         }
         excludedClasses.addAll(Arrays.asList(EXCLUDED_CLASSES));
-        return excludedClasses;
+        return excludedClasses.toArray(new String[0]);
     }
 
     @Override
@@ -160,8 +160,10 @@ public final class CreateInfo implements ICreateInfo {
         "android.content.res.Resources$Theme#resolveAttribute",
         "android.content.res.Resources$Theme#resolveAttributes",
         "android.content.res.AssetManager#open",
-        "android.content.res.AssetManager#newTheme",
-        "android.content.res.AssetManager#deleteTheme",
+        "android.content.res.AssetManager#nativeCreate",
+        "android.content.res.AssetManager#nativeDestroy",
+        "android.content.res.AssetManager#nativeThemeCreate",
+        "android.content.res.AssetManager#nativeThemeDestroy",
         "android.content.res.AssetManager#getAssignedPackageIdentifiers",
         "android.content.res.TypedArray#getValueAt",
         "android.content.res.TypedArray#obtain",
@@ -235,6 +237,7 @@ public final class CreateInfo implements ICreateInfo {
         "libcore.io.MemoryMappedFile#close",
         "libcore.io.MemoryMappedFile#bigEndianIterator",
         "libcore.util.NativeAllocationRegistry#applyFreeFunction",
+        "libcore.util.NativeAllocationRegistry#registerNativeAllocation",
     };
 
     /**
@@ -335,7 +338,9 @@ public final class CreateInfo implements ICreateInfo {
     private final static String[] EXCLUDED_CLASSES =
         new String[] {
             "android.preference.PreferenceActivity",
+            "java.**",
             "org.kxml2.io.KXmlParser",
+            "sun.**",
         };
 
     /**

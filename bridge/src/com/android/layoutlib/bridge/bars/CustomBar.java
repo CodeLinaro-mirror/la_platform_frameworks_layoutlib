@@ -18,6 +18,7 @@ package com.android.layoutlib.bridge.bars;
 
 import com.android.ide.common.rendering.api.LayoutLog;
 import com.android.ide.common.rendering.api.RenderResources;
+import com.android.ide.common.rendering.api.ResourceNamespace;
 import com.android.ide.common.rendering.api.ResourceValue;
 import com.android.ide.common.rendering.api.StyleResourceValue;
 import com.android.layoutlib.bridge.Bridge;
@@ -61,8 +62,6 @@ import static android.os._Original_Build.VERSION_CODES.LOLLIPOP;
  * It also provides a few utility methods to configure the content of the layout.
  */
 abstract class CustomBar extends LinearLayout {
-
-
     private final int mSimulatedPlatformVersion;
 
     protected abstract TextView getStyleableTextView();
@@ -84,7 +83,9 @@ abstract class CustomBar extends LinearLayout {
         try {
             parser = ParserFactory.create(getClass().getResourceAsStream(layoutPath), name);
 
-            BridgeXmlBlockParser bridgeParser = new BridgeXmlBlockParser(parser, context, false);
+            // TODO(namespaces): does the namespace matter here?
+            BridgeXmlBlockParser bridgeParser =
+                    new BridgeXmlBlockParser(parser, context, ResourceNamespace.TODO());
 
             try {
                 inflater.inflate(bridgeParser, this, true);
@@ -135,33 +136,23 @@ abstract class CustomBar extends LinearLayout {
         }
     }
 
-    protected TextView setText(int index, String string, boolean reference) {
+    protected TextView setText(int index, String string) {
         View child = getChildAt(index);
         if (child instanceof TextView) {
             TextView textView = (TextView) child;
-            setText(textView, string, reference);
+            textView.setText(string);
             return textView;
         }
 
         return null;
     }
 
-    private void setText(TextView textView, String string, boolean reference) {
-        if (reference) {
-            ResourceValue value = getResourceValue(string);
-            if (value != null) {
-                string = value.getValue();
-            }
-        }
-        textView.setText(string);
-    }
-
     protected void setStyle(String themeEntryName) {
-
         BridgeContext bridgeContext = getContext();
         RenderResources res = bridgeContext.getRenderResources();
 
-        ResourceValue value = res.findItemInTheme(themeEntryName, true /*isFrameworkAttr*/);
+        ResourceValue value = res.findItemInTheme(
+                BridgeContext.createFrameworkAttrReference(themeEntryName));
         value = res.resolveResValue(value);
 
         if (!(value instanceof StyleResourceValue)) {
@@ -171,8 +162,8 @@ abstract class CustomBar extends LinearLayout {
         StyleResourceValue style = (StyleResourceValue) value;
 
         // get the background
-        ResourceValue backgroundValue = res.findItemInStyle(style, "background",
-                true /*isFrameworkAttr*/);
+        ResourceValue backgroundValue = res.findItemInStyle(style,
+                BridgeContext.createFrameworkAttrReference("background"));
         backgroundValue = res.resolveResValue(backgroundValue);
         if (backgroundValue != null) {
             Drawable d = ResourceHelper.getDrawable(backgroundValue, bridgeContext);
@@ -184,14 +175,14 @@ abstract class CustomBar extends LinearLayout {
         TextView textView = getStyleableTextView();
         if (textView != null) {
             // get the text style
-            ResourceValue textStyleValue = res.findItemInStyle(style, "titleTextStyle",
-                    true /*isFrameworkAttr*/);
+            ResourceValue textStyleValue = res.findItemInStyle(style,
+                    BridgeContext.createFrameworkAttrReference("titleTextStyle"));
             textStyleValue = res.resolveResValue(textStyleValue);
             if (textStyleValue instanceof StyleResourceValue) {
                 StyleResourceValue textStyle = (StyleResourceValue) textStyleValue;
 
-                ResourceValue textSize = res.findItemInStyle(textStyle, "textSize",
-                        true /*isFrameworkAttr*/);
+                ResourceValue textSize = res.findItemInStyle(textStyle,
+                        BridgeContext.createFrameworkAttrReference("textSize"));
                 textSize = res.resolveResValue(textSize);
 
                 if (textSize != null) {
@@ -203,9 +194,8 @@ abstract class CustomBar extends LinearLayout {
                     }
                 }
 
-
-                ResourceValue textColor = res.findItemInStyle(textStyle, "textColor",
-                        true);
+                ResourceValue textColor = res.findItemInStyle(textStyle,
+                        BridgeContext.createFrameworkAttrReference("textColor"));
                 textColor = res.resolveResValue(textColor);
                 if (textColor != null) {
                     ColorStateList stateList = ResourceHelper.getColorStateList(
@@ -240,14 +230,14 @@ abstract class CustomBar extends LinearLayout {
         }
         RenderResources renderResources = getContext().getRenderResources();
         // First check if the bar is translucent.
-        boolean translucent = ResourceHelper.getBooleanThemeValue(renderResources,
-                translucentAttrName, true, false);
+        boolean translucent = ResourceHelper.getBooleanThemeFrameworkAttrValue(renderResources,
+                translucentAttrName, false);
         if (translucent) {
             // Keep in sync with R.color.system_bar_background_semi_transparent from system ui.
             return 0x66000000;  // 40% black.
         }
-        boolean transparent = ResourceHelper.getBooleanThemeValue(renderResources,
-                "windowDrawsSystemBarBackgrounds", true, false);
+        boolean transparent = ResourceHelper.getBooleanThemeFrameworkAttrValue(renderResources,
+                "windowDrawsSystemBarBackgrounds", false);
         if (transparent) {
             return getColor(renderResources, colorAttrName);
         }
@@ -255,8 +245,9 @@ abstract class CustomBar extends LinearLayout {
     }
 
     private static int getColor(RenderResources renderResources, String attr) {
-        // From ?attr/foo to @color/bar. This is most likely an ItemResourceValue.
-        ResourceValue resource = renderResources.findItemInTheme(attr, true);
+        // From ?attr/foo to @color/bar. This is most likely an StyleItemResourceValue.
+        ResourceValue resource = renderResources.findItemInTheme(
+                BridgeContext.createFrameworkAttrReference(attr));
         // Form @color/bar to the #AARRGGBB
         resource = renderResources.resolveResValue(resource);
         if (resource != null) {
@@ -276,15 +267,5 @@ abstract class CustomBar extends LinearLayout {
             }
         }
         return 0;
-    }
-
-    private ResourceValue getResourceValue(String reference) {
-        RenderResources res = getContext().getRenderResources();
-
-        // find the resource
-        ResourceValue value = res.findResValue(reference, false);
-
-        // resolve it if needed
-        return res.resolveResValue(value);
     }
 }

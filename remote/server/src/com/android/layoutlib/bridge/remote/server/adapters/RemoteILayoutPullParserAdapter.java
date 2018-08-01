@@ -17,6 +17,7 @@
 package com.android.layoutlib.bridge.remote.server.adapters;
 
 import com.android.ide.common.rendering.api.ILayoutPullParser;
+import com.android.ide.common.rendering.api.ResourceNamespace;
 import com.android.layout.remote.api.RemoteILayoutPullParser;
 import com.android.tools.layoutlib.annotations.NotNull;
 
@@ -38,9 +39,7 @@ public class RemoteILayoutPullParserAdapter extends RemoteXmlPullParserAdapter
     }
 
     @Override
-    public ILayoutPullParser getParser(String layoutName) {
-        throw new UnsupportedOperationException();
+    public ResourceNamespace getLayoutNamespace() {
+        throw new UnsupportedOperationException("Not implemented yet");
     }
-
-
 }

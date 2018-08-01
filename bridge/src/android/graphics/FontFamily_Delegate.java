@@ -44,6 +44,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.logging.Logger;
+
+import libcore.util.NativeAllocationRegistry_Delegate;
 
 import static android.graphics.Typeface.RESOLVE_BY_FONT_TABLE;
 import static android.graphics.Typeface_Delegate.SYSTEM_FONTS;
@@ -124,6 +127,7 @@ public class FontFamily_Delegate {
     // ---- delegate manager ----
     private static final DelegateManager<FontFamily_Delegate> sManager =
             new DelegateManager<FontFamily_Delegate>(FontFamily_Delegate.class);
+    private static long sFamilyFinalizer = -1;
 
     // ---- delegate helper data ----
     private static String sFontLocation;
@@ -323,10 +327,14 @@ public class FontFamily_Delegate {
     }
 
     @LayoutlibDelegate
-    /*package*/ static void nUnrefFamily(long nativePtr) {
-        // Removing the java reference for the object doesn't mean that it's freed for garbage
-        // collection. Typeface_Delegate may still hold a reference for it.
-        sManager.removeJavaReferenceFor(nativePtr);
+    /*package*/ static long nGetFamilyReleaseFunc() {
+        synchronized (ColorFilter_Delegate.class) {
+            if (sFamilyFinalizer == -1) {
+                sFamilyFinalizer = NativeAllocationRegistry_Delegate.createFinalizer(
+                        sManager::removeJavaReferenceFor);
+            }
+        }
+        return sFamilyFinalizer;
     }
 
     @LayoutlibDelegate
@@ -447,8 +455,10 @@ public class FontFamily_Delegate {
     }
 
     @LayoutlibDelegate
-    /*package*/ static void nAbort(long builderPtr) {
-        sManager.removeJavaReferenceFor(builderPtr);
+    /*package*/ static long nGetBuilderReleaseFunc() {
+        // Layoutlib uses the same reference for the builder and the font family,
+        // so it should not release that reference at the builder stage.
+        return -1;
     }
 
     // ---- private helper methods ----
@@ -476,6 +486,7 @@ public class FontFamily_Delegate {
     private boolean addFont(@NonNull String path, int weight, int italic) {
         if (path.startsWith(SYSTEM_FONTS) &&
                 !SDK_FONTS.contains(path.substring(SYSTEM_FONTS.length()))) {
+            Logger.getLogger(FontFamily_Delegate.class.getSimpleName()).warning("Unable to load font " + path);
             return mValid = false;
         }
         // Set valid to true, even if the font fails to load.

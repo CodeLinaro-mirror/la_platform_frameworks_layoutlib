@@ -18,12 +18,12 @@ package android.graphics;
 
 import com.android.SdkConstants;
 import com.android.ide.common.rendering.api.LayoutLog;
+import com.android.ide.common.rendering.api.ResourceNamespace;
 import com.android.layoutlib.bridge.Bridge;
 import com.android.layoutlib.bridge.android.BridgeContext;
 import com.android.layoutlib.bridge.android.BridgeXmlBlockParser;
 import com.android.layoutlib.bridge.android.RenderParamsFlags;
 import com.android.layoutlib.bridge.impl.DelegateManager;
-import com.android.layoutlib.bridge.impl.ParserFactory;
 import com.android.layoutlib.bridge.impl.RenderAction;
 import com.android.tools.layoutlib.annotations.LayoutlibDelegate;
 
@@ -39,8 +39,6 @@ import android.text.FontConfig;
 import android.util.ArrayMap;
 
 import java.awt.Font;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.nio.ByteBuffer;
@@ -53,6 +51,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
+
+import libcore.util.NativeAllocationRegistry_Delegate;
 
 import static android.graphics.FontFamily_Delegate.getFontLocation;
 
@@ -75,7 +75,7 @@ public final class Typeface_Delegate {
     // ---- delegate manager ----
     private static final DelegateManager<Typeface_Delegate> sManager =
             new DelegateManager<>(Typeface_Delegate.class);
-
+    private static long sFinalizer = -1;
 
     // ---- delegate data ----
     private static long sDefaultTypeface;
@@ -196,8 +196,14 @@ public final class Typeface_Delegate {
     }
 
     @LayoutlibDelegate
-    /*package*/ static void nativeUnref(long native_instance) {
-        sManager.removeJavaReferenceFor(native_instance);
+    /*package*/ static long nativeGetReleaseFunc() {
+        synchronized (Typeface_Delegate.class) {
+            if (sFinalizer == -1) {
+                sFinalizer = NativeAllocationRegistry_Delegate.createFinalizer(
+                        sManager::removeJavaReferenceFor);
+            }
+        }
+        return sFinalizer;
     }
 
     @LayoutlibDelegate
@@ -263,25 +269,16 @@ public final class Typeface_Delegate {
                     RenderParamsFlags.FLAG_KEY_XML_FILE_PARSER_SUPPORT);
             XmlPullParser parser = null;
             if (psiParserSupport != null && psiParserSupport) {
-                parser = context.getLayoutlibCallback().getXmlFileParser(path);
+                parser = context.getLayoutlibCallback().createXmlParserForPsiFile(path);
             } else {
-                File f = new File(path);
-                if (f.isFile()) {
-                    try {
-                        parser = ParserFactory.create(f);
-                    } catch (XmlPullParserException | FileNotFoundException e) {
-                        // this is an error and not warning since the file existence is checked
-                        // before
-                        // attempting to parse it.
-                        Bridge.getLog().error(null, "Failed to parse file " + path, e,
-                                null /*data*/);
-                    }
-                }
+                parser = context.getLayoutlibCallback().createXmlParserForFile(path);
             }
 
             if (parser != null) {
+                // TODO(namespaces): The aapt namespace should not matter for parsing font files?
                 BridgeXmlBlockParser blockParser =
-                        new BridgeXmlBlockParser(parser, context, isFramework);
+                        new BridgeXmlBlockParser(
+                                parser, context, ResourceNamespace.fromBoolean(isFramework));
                 try {
                     FontResourcesParser.FamilyResourceEntry entry =
                             FontResourcesParser.parse(blockParser, context.getResources());
@@ -452,9 +449,7 @@ public final class Typeface_Delegate {
                 return font;
             }
 
-            FontVariant ffd2Variant = ffd2.getVariant();
             Font font2 = ffd2.getFont(weight, isItalic);
-            assert ffd2Variant != FontVariant.NONE && ffd2Variant != ffdVariant && font2 != null;
             // Add the font with the matching variant to the list.
             return variant == ffd.getVariant() ? font : font2;
         }

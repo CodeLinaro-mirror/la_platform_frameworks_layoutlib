@@ -18,10 +18,12 @@ package com.android.layoutlib.bridge.intensive;
 
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.ResourceNamespace;
-import com.android.ide.common.rendering.api.ResourceValue;
+import com.android.ide.common.rendering.api.ResourceReference;
+import com.android.ide.common.rendering.api.ResourceValueImpl;
 import com.android.ide.common.rendering.api.SessionParams;
 import com.android.ide.common.rendering.api.SessionParams.RenderingMode;
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.android.ide.common.rendering.api.XmlParserFactory;
 import com.android.internal.R;
 import com.android.layoutlib.bridge.android.BridgeContext;
 import com.android.layoutlib.bridge.android.RenderParamsFlags;
@@ -35,15 +37,14 @@ import com.android.layoutlib.bridge.intensive.setup.LayoutPullParser;
 import com.android.resources.Density;
 import com.android.resources.Navigation;
 import com.android.resources.ResourceType;
-import com.android.resources.ResourceUrl;
 
 import org.junit.After;
 import org.junit.Test;
 import org.kxml2.io.KXmlParser;
 import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
 
 import android.annotation.NonNull;
+import android.annotation.Nullable;
 import android.content.res.AssetManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
@@ -413,6 +414,61 @@ public class RenderTests extends RenderTestBase {
     }
 
     /**
+     * Test a ImageView which has a vector drawable as its src and tint attribute.
+     */
+    @Test
+    public void testVectorDrawableWithTintInImageView() throws ClassNotFoundException {
+        // Create the layout pull parser.
+        LayoutPullParser parser = LayoutPullParser.createFromString(
+                "<ImageView xmlns:android=\"http://schemas.android.com/apk/res/android\"\n" +
+                        "    android:layout_height=\"match_parent\"\n" +
+                        "    android:layout_width=\"match_parent\"\n" +
+                        "    android:src=\"@drawable/vector_drawable_without_tint\"\n" +
+                        "    android:tint=\"#FF00FF00\" />");
+        // Create LayoutLibCallback.
+        LayoutLibTestCallback layoutLibCallback =
+                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
+        layoutLibCallback.initResources();
+
+        SessionParams params = getSessionParamsBuilder()
+                .setParser(parser)
+                .setCallback(layoutLibCallback)
+                .setTheme("Theme.Material.Light.NoActionBar.Fullscreen", false)
+                .setRenderingMode(RenderingMode.V_SCROLL)
+                .build();
+
+        renderAndVerify(params, "vector_drawable_with_tint_in_image_view.png",
+                TimeUnit.SECONDS.toNanos(2));
+    }
+
+    /**
+     * Test a vector drawable which has tint attribute.
+     */
+    @Test
+    public void testVectorDrawableWithTintInItself() throws ClassNotFoundException {
+        // Create the layout pull parser.
+        LayoutPullParser parser = LayoutPullParser.createFromString(
+                "<ImageView xmlns:android=\"http://schemas.android.com/apk/res/android\"\n" +
+                        "    android:layout_height=\"match_parent\"\n" +
+                        "    android:layout_width=\"match_parent\"\n" +
+                        "    android:src=\"@drawable/vector_drawable_with_tint\" />");
+        // Create LayoutLibCallback.
+        LayoutLibTestCallback layoutLibCallback =
+                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
+        layoutLibCallback.initResources();
+
+        SessionParams params = getSessionParamsBuilder()
+                .setParser(parser)
+                .setCallback(layoutLibCallback)
+                .setTheme("Theme.Material.Light.NoActionBar.Fullscreen", false)
+                .setRenderingMode(RenderingMode.V_SCROLL)
+                .build();
+
+        renderAndVerify(params, "vector_drawable_with_tint_itself.png",
+                TimeUnit.SECONDS.toNanos(2));
+    }
+
+    /**
      * Test a vector drawable that uses trimStart and trimEnd. It also tests all the primitives
      * for vector drawables (lines, moves and cubic and quadratic curves).
      */
@@ -535,8 +591,8 @@ public class RenderTests extends RenderTestBase {
                 .setCallback(layoutLibCallback)
                 .setTheme("Theme.Material.NoActionBar.Fullscreen", false)
                 .setRenderingMode(RenderingMode.V_SCROLL)
+                .disableDecoration()
                 .build();
-        params.setForceNoDecor();
         params.setExtendedViewInfoMode(true);
 
         // Do an only-measure pass
@@ -568,8 +624,8 @@ public class RenderTests extends RenderTestBase {
                     .setCallback(layoutLibCallback)
                     .setTheme("Theme.Material.NoActionBar.Fullscreen", false)
                     .setRenderingMode(RenderingMode.V_SCROLL)
+                    .disableDecoration()
                     .build();
-        params.setForceNoDecor();
         params.setExtendedViewInfoMode(true);
 
         result = renderAndVerify(params, "scrolled.png");
@@ -607,9 +663,9 @@ public class RenderTests extends RenderTestBase {
         assertEquals("android", resources.getResourcePackageName(android.R.style.ButtonBar));
         assertEquals("ButtonBar", resources.getResourceEntryName(android.R.style.ButtonBar));
         assertEquals("style", resources.getResourceTypeName(android.R.style.ButtonBar));
-        int id = Resources_Delegate.getLayoutlibCallback(resources).getResourceId(
-                ResourceType.STRING,
-                "app_name");
+        Integer id = Resources_Delegate.getLayoutlibCallback(resources).getOrGenerateResourceId(
+                new ResourceReference(ResourceNamespace.RES_AUTO, ResourceType.STRING, "app_name"));
+        assertNotNull(id);
         assertEquals("com.android.layoutlib.test.myapplication:string/app_name",
                 resources.getResourceName(id));
         assertEquals("com.android.layoutlib.test.myapplication",
@@ -644,9 +700,14 @@ public class RenderTests extends RenderTestBase {
         Resources resources = Resources_Delegate.initSystem(context, assetManager, metrics,
                 configuration, params.getLayoutlibCallback());
 
-        int id = Resources_Delegate.getLayoutlibCallback(resources).getResourceId(
-                ResourceType.ARRAY,
-                "string_array");
+        Integer id =
+                Resources_Delegate.getLayoutlibCallback(resources)
+                        .getOrGenerateResourceId(
+                                new ResourceReference(
+                                        ResourceNamespace.RES_AUTO,
+                                        ResourceType.ARRAY,
+                                        "string_array"));
+        assertNotNull(id);
         String[] strings = resources.getStringArray(id);
         assertArrayEquals(
                 new String[]{"mystring", "Hello world!", "candidates", "Unknown", "?EC"},
@@ -771,9 +832,22 @@ public class RenderTests extends RenderTestBase {
         // Setup
         // Create the layout pull parser for our resources (empty.xml can not be part of the test
         // app as it won't compile).
-        ParserFactory.setParserFactory(new com.android.ide.common.rendering.api.ParserFactory() {
+        ParserFactory.setParserFactory(new XmlParserFactory() {
             @Override
-            public XmlPullParser createParser(String debugName) throws XmlPullParserException {
+            @Nullable
+            public XmlPullParser createXmlParserForPsiFile(@NonNull String fileName) {
+                return null;
+            }
+
+            @Override
+            @Nullable
+            public XmlPullParser createXmlParserForFile(@NonNull String fileName) {
+                return null;
+            }
+
+            @Override
+            @NonNull
+            public XmlPullParser createXmlParser() {
                 return new KXmlParser();
             }
         });
@@ -801,7 +875,7 @@ public class RenderTests extends RenderTestBase {
 
         try {
             ColorStateList stateList = ResourceHelper.getColorStateList(
-                    new ResourceValue(
+                    new ResourceValueImpl(
                             ResourceNamespace.RES_AUTO,
                             ResourceType.COLOR,
                             "test_list",
@@ -823,7 +897,7 @@ public class RenderTests extends RenderTestBase {
             Resources.Theme theme = mContext.getResources().newTheme();
             theme.applyStyle(R.style.ThemeOverlay_Material_Light, true);
             stateList = ResourceHelper.getColorStateList(
-                    new ResourceValue(
+                    new ResourceValueImpl(
                             ResourceNamespace.RES_AUTO,
                             ResourceType.COLOR,
                             "test_list",
@@ -874,11 +948,16 @@ public class RenderTests extends RenderTestBase {
                 params.getTargetSdkVersion(), params.isRtlSupported());
         Resources resources = Resources_Delegate.initSystem(context, assetManager, metrics,
                 configuration, params.getLayoutlibCallback());
-        int id = Resources_Delegate.getLayoutlibCallback(resources).getResourceId(
-                ResourceType.STRING,
-                "app_name");
-        assertEquals(id, resources.getIdentifier("string/app_name", null, null));
-        assertEquals(id, resources.getIdentifier("app_name", "string", null));
+        Integer id =
+                Resources_Delegate.getLayoutlibCallback(resources)
+                        .getOrGenerateResourceId(
+                                new ResourceReference(
+                                        ResourceNamespace.RES_AUTO,
+                                        ResourceType.STRING,
+                                        "app_name"));
+        assertNotNull(id);
+        assertEquals(id.intValue(), resources.getIdentifier("string/app_name", null, null));
+        assertEquals(id.intValue(), resources.getIdentifier("app_name", "string", null));
         assertEquals(0, resources.getIdentifier("string/does_not_exist", null, null));
         assertEquals(R.string.accept, resources.getIdentifier("android:string/accept", null,
                 null));
@@ -1131,8 +1210,8 @@ public class RenderTests extends RenderTestBase {
                 .setCallback(layoutLibCallback)
                 .setTheme("Theme.Material.NoActionBar.Fullscreen", false)
                 .setRenderingMode(RenderingMode.V_SCROLL)
+                .disableDecoration()
                 .build();
-        params.setForceNoDecor();
 
         RenderResult result = RenderTestBase.render(sBridge, params, -1);
         BufferedImage image = result.getImage();
@@ -1144,5 +1223,126 @@ public class RenderTests extends RenderTestBase {
         }
 
         RenderTestBase.verify("view_boundaries.png", image);
+    }
+
+    /**
+     * Test rendering of strings that have mixed RTL and LTR scripts.
+     * <p>
+     * http://b/37510906
+     */
+    @Test
+    public void testMixedRtlLtrRendering() throws Exception {
+        //
+        final String layout =
+                "<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n" +
+                        "              android:layout_width=\"match_parent\"\n" +
+                        "              android:layout_height=\"match_parent\"\n" +
+                        "              android:orientation=\"vertical\">\n" + "\n" +
+                        "    <TextView\n" +
+                        "        android:layout_width=\"wrap_content\"\n" +
+                        "        android:layout_height=\"wrap_content\"\n" +
+                        "        android:textSize=\"30sp\"\n" +
+                        "        android:background=\"#55FF0000\"\n" +
+                        "        android:text=\"این یک رشته ایرانی است\"/>\n" +
+                        "    <TextView\n" +
+                        "        android:layout_width=\"wrap_content\"\n" +
+                        "        android:layout_height=\"wrap_content\"\n" +
+                        "        android:textSize=\"30sp\"\n" +
+                        "        android:background=\"#55FF00FF\"\n" +
+                        "        android:text=\"این یک رشته ایرانی است(\"/>\n" +
+                        "    <TextView\n" +
+                        "        android:layout_width=\"wrap_content\"\n" +
+                        "        android:layout_height=\"wrap_content\"\n" +
+                        "        android:textSize=\"30sp\"\n" +
+                        "        android:background=\"#55FAF012\"\n" +
+                        "        android:text=\")(این یک رشته ایرانی است(\"/>\n" +
+                        "</LinearLayout>";
+
+        LayoutPullParser parser = LayoutPullParser.createFromString(layout);
+        // Create LayoutLibCallback.
+        LayoutLibTestCallback layoutLibCallback =
+                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
+        layoutLibCallback.initResources();
+
+        SessionParams params = getSessionParamsBuilder()
+                .setParser(parser)
+                .setCallback(layoutLibCallback)
+                .setTheme("Theme.Material.NoActionBar.Fullscreen", false)
+                .setRenderingMode(RenderingMode.V_SCROLL)
+                .disableDecoration()
+                .build();
+
+        renderAndVerify(params, "rtl_ltr.png", -1);
+    }
+
+    @Test
+    public void testViewStub() throws Exception {
+        //
+        final String layout =
+                "<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n" +
+                        "              android:layout_width=\"match_parent\"\n" +
+                        "              android:layout_height=\"match_parent\"\n" +
+                        "              android:orientation=\"vertical\">\n" + "\n" +
+                        "      <ViewStub\n" +
+                        "        xmlns:tools=\"http://schemas.android.com/tools\"\n" +
+                        "        android:layout_width=\"match_parent\"\n" +
+                        "        android:layout_height=\"match_parent\"\n" +
+                        "        android:layout=\"@layout/four_corners\"\n" +
+                        "        tools:visibility=\"visible\" />" +
+                        "</LinearLayout>";
+
+        // Create the layout pull parser.
+        LayoutPullParser parser = LayoutPullParser.createFromString(layout);
+
+        // Create LayoutLibCallback.
+        LayoutLibTestCallback layoutLibCallback =
+                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
+        layoutLibCallback.initResources();
+
+        SessionParams params = getSessionParamsBuilder()
+                .setParser(parser)
+                .setCallback(layoutLibCallback)
+                .setTheme("Theme.Material.NoActionBar.Fullscreen", false)
+                .setRenderingMode(RenderingMode.V_SCROLL)
+                .disableDecoration()
+                .build();
+
+        renderAndVerify(params, "view_stub.png", -1);
+    }
+
+    @Test
+    public void testImageResize() throws ClassNotFoundException {
+        LayoutLibTestCallback layoutLibCallback =
+                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
+        layoutLibCallback.initResources();
+
+        LayoutPullParser parser = LayoutPullParser.createFromString(
+                "<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n" +
+                        "    android:layout_width=\"match_parent\"\n" +
+                        "    android:layout_height=\"match_parent\"\n" +
+                        "    android:background=\"@drawable/ninepatch\"\n" +
+                        "    android:layout_margin=\"20dp\"\n" +
+                        "    android:orientation=\"vertical\">\n\n" +
+                        "    <Button\n" +
+                        "        android:layout_width=\"wrap_content\"\n" +
+                        "        android:layout_height=\"wrap_content\"\n" +
+                        "        android:text=\"Button\" />\n\n" +
+                        "    <Button\n" +
+                        "        android:layout_width=\"wrap_content\"\n" +
+                        "        android:layout_height=\"wrap_content\"\n" +
+                        "        android:text=\"Button\" />\n"
+                        + "</LinearLayout>");
+
+        // Ask for an image that it's 1/10th the size of the actual device image
+        SessionParams params = getSessionParamsBuilder()
+                .setParser(parser)
+                .setCallback(layoutLibCallback)
+                .setImageFactory((width, height) ->
+                        new BufferedImage(width / 10, height / 10,
+                        BufferedImage.TYPE_INT_ARGB))
+                .setFlag(RenderParamsFlags.FLAG_KEY_RESULT_IMAGE_AUTO_SCALE, true)
+                .build();
+
+        renderAndVerify(params, "auto-scale-image.png");
     }
 }

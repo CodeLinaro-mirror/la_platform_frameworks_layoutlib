@@ -17,6 +17,7 @@
 package com.android.layoutlib.bridge.bars;
 
 import com.android.ide.common.rendering.api.LayoutLog;
+import com.android.ide.common.rendering.api.ResourceNamespace;
 import com.android.layoutlib.bridge.Bridge;
 import com.android.layoutlib.bridge.android.BridgeContext;
 import com.android.layoutlib.bridge.android.BridgeXmlBlockParser;
@@ -81,7 +82,7 @@ public class StatusBar extends CustomBar {
         loadIcon(1, "stat_sys_wifi_signal_4_fully."
                         + Config.getWifiIconType(simulatedPlatformVersion), density);
         loadIcon(2, "stat_sys_battery_100.png", density);
-        setText(3, Config.getTime(simulatedPlatformVersion), false)
+        setText(3, Config.getTime(simulatedPlatformVersion))
                 .setTextColor(Config.getTimeColor(simulatedPlatformVersion));
     }
 
@@ -101,8 +102,11 @@ public class StatusBar extends CustomBar {
 
             if (stream != null) {
                 try {
-                    BridgeXmlBlockParser parser = new BridgeXmlBlockParser(
-                            ParserFactory.create(stream, null), (BridgeContext) mContext, true);
+                    BridgeXmlBlockParser parser =
+                            new BridgeXmlBlockParser(
+                                    ParserFactory.create(stream, iconName),
+                                    (BridgeContext) mContext,
+                                    ResourceNamespace.ANDROID);
                     imageView.setImageDrawable(
                             Drawable.createFromXml(mContext.getResources(), parser));
                 } catch (XmlPullParserException e) {

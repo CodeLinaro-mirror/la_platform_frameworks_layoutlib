@@ -18,6 +18,7 @@ package com.android.layoutlib.bridge.impl;
 
 import com.android.ide.common.rendering.api.AdapterBinding;
 import com.android.ide.common.rendering.api.HardwareConfig;
+import com.android.ide.common.rendering.api.ILayoutPullParser;
 import com.android.ide.common.rendering.api.LayoutLog;
 import com.android.ide.common.rendering.api.LayoutlibCallback;
 import com.android.ide.common.rendering.api.RenderResources;
@@ -45,8 +46,6 @@ import com.android.layoutlib.bridge.android.support.FragmentTabHostUtil;
 import com.android.layoutlib.bridge.android.support.SupportPreferencesUtil;
 import com.android.layoutlib.bridge.impl.binding.FakeAdapter;
 import com.android.layoutlib.bridge.impl.binding.FakeExpandableAdapter;
-import com.android.layoutlib.bridge.util.ReflectionUtils;
-import com.android.resources.ResourceType;
 import com.android.tools.layoutlib.java.System_Delegate;
 import com.android.util.Pair;
 import com.android.util.PropertiesMap;
@@ -171,8 +170,9 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
         BridgeContext context = getContext();
 
         // use default of true in case it's not found to use alpha by default
-        mIsAlphaChannelImage = ResourceHelper.getBooleanThemeValue(params.getResources(),
-                "windowIsFloating", true, true);
+        mIsAlphaChannelImage =
+                ResourceHelper.getBooleanThemeFrameworkAttrValue(params.getResources(),
+                        "windowIsFloating", true);
 
         mLayoutBuilder = new Layout.Builder(params, context);
 
@@ -180,7 +180,8 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
         mInflater = new BridgeInflater(context, params.getLayoutlibCallback());
         context.setBridgeInflater(mInflater);
 
-        mBlockParser = new BridgeXmlBlockParser(params.getLayoutDescription(), context, false);
+        ILayoutPullParser layoutParser = params.getLayoutDescription();
+        mBlockParser = new BridgeXmlBlockParser(layoutParser, context, layoutParser.getLayoutNamespace());
 
         return SUCCESS.createResult();
     }
@@ -484,6 +485,7 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
                 // it doesn't get cached.
                 boolean disableBitmapCaching = Boolean.TRUE.equals(params.getFlag(
                     RenderParamsFlags.FLAG_KEY_DISABLE_BITMAP_CACHING));
+
                 if (mNewRenderSize || mCanvas == null || disableBitmapCaching) {
                     mNewRenderSize = false;
                     if (params.getImageFactory() != null) {
@@ -518,6 +520,19 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
                     } else {
                         mCanvas.setBitmap(bitmap);
                     }
+
+                    boolean enableImageResizing =
+                            mImage.getWidth() != mMeasuredScreenWidth &&
+                            mImage.getHeight() != mMeasuredScreenHeight &&
+                            Boolean.TRUE.equals(params.getFlag(
+                                    RenderParamsFlags.FLAG_KEY_RESULT_IMAGE_AUTO_SCALE));
+
+                    if (enableImageResizing) {
+                        float scaleX = (float)mImage.getWidth() / mMeasuredScreenWidth;
+                        float scaleY = (float)mImage.getHeight() / mMeasuredScreenHeight;
+                        mCanvas.scale(scaleX, scaleY);
+                    }
+
                     mCanvas.setDensity(hardwareConfig.getDensity().getDpiValue());
                 }
 
@@ -715,12 +730,7 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
         if (!hasToolbar(collapsingToolbar)) {
             return;
         }
-        RenderResources res = context.getRenderResources();
         String title = params.getAppLabel();
-        ResourceValue titleValue = res.findResValue(title, false);
-        if (titleValue != null && titleValue.getValue() != null) {
-            title = titleValue.getValue();
-        }
         DesignLibUtil.setTitle(collapsingToolbar, title);
     }
 
@@ -832,7 +842,7 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
 
         // this must be called before addTab() so that the TabHost searches its TabWidget
         // and FrameLayout.
-        if (ReflectionUtils.isInstanceOf(tabHost, FragmentTabHostUtil.CN_FRAGMENT_TAB_HOST)) {
+        if (isInstanceOf(tabHost, FragmentTabHostUtil.CN_FRAGMENT_TAB_HOST)) {
             FragmentTabHostUtil.setup(tabHost, getContext());
         } else {
             tabHost.setup();
@@ -853,10 +863,10 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
                 @SuppressWarnings("ConstantConditions")  // child cannot be null.
                 int id = child.getId();
                 @SuppressWarnings("deprecation")
-                Pair<ResourceType, String> resource = layoutlibCallback.resolveResourceId(id);
+                ResourceReference resource = layoutlibCallback.resolveResourceId(id);
                 String name;
                 if (resource != null) {
-                    name = resource.getSecond();
+                    name = resource.getName();
                 } else {
                     name = String.format("Tab %d", i+1); // default name if id is unresolved.
                 }

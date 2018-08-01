@@ -117,7 +117,8 @@ public class SupportPreferencesUtil {
     @Nullable
     private static Context getThemedContext(@NonNull BridgeContext bridgeContext) {
         RenderResources resources = bridgeContext.getRenderResources();
-        ResourceValue preferenceTheme = resources.findItemInTheme("preferenceTheme", false);
+        ResourceValue preferenceTheme = resources.findItemInTheme(
+                bridgeContext.createAppCompatAttrReference("preferenceTheme"));
 
         if (preferenceTheme != null) {
             // resolve it, if needed.
@@ -251,22 +252,26 @@ public class SupportPreferencesUtil {
             ArrayList<Object> viewCookie = new ArrayList<>();
             if (parser instanceof BridgeXmlBlockParser) {
                 // Setup a parser that stores the XmlTag
-                parser = new BridgeXmlBlockParser(parser, null, false) {
-                    @Override
-                    public Object getViewCookie() {
-                        return ((BridgeXmlBlockParser) getParser()).getViewCookie();
-                    }
+                parser =
+                        new BridgeXmlBlockParser(
+                                parser,
+                                null,
+                                ((BridgeXmlBlockParser) parser).getFileResourceNamespace()) {
+                            @Override
+                            public Object getViewCookie() {
+                                return ((BridgeXmlBlockParser) getParser()).getViewCookie();
+                            }
 
-                    @Override
-                    public int next() throws XmlPullParserException, IOException {
-                        int ev = super.next();
-                        if (ev == XmlPullParser.START_TAG) {
-                            viewCookie.add(this.getViewCookie());
-                        }
+                            @Override
+                            public int next() throws XmlPullParserException, IOException {
+                                int ev = super.next();
+                                if (ev == XmlPullParser.START_TAG) {
+                                    viewCookie.add(this.getViewCookie());
+                                }
 
-                        return ev;
-                    }
-                };
+                                return ev;
+                            }
+                        };
             }
 
             // Create the PreferenceInflater
