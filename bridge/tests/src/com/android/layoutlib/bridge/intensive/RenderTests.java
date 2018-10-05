@@ -161,6 +161,10 @@ public class RenderTests extends RenderTestBase {
     @Test
     public void testArrayCheck() throws ClassNotFoundException, FileNotFoundException {
         renderAndVerify("array_check.xml", "array_check.png");
+
+        // We expect fidelity warnings for Path.isConvex. Fail for anything else.
+        sRenderMessages.removeIf(
+                message -> message.equals("Font$Builder.nAddAxis is not supported."));
     }
 
     @Test
@@ -573,6 +577,43 @@ public class RenderTests extends RenderTestBase {
                 .build();
 
         renderAndVerify(params, "vector_drawable_radial_gradient.png",
+                TimeUnit.SECONDS.toNanos(2));
+    }
+
+    /**
+     * Tests that the gradients are correctly displayed when using transparent colors
+     * and a wide range of offset values.
+     * <p/>
+     * http://b/112759140
+     */
+    @Test
+    public void testGradientColors() throws ClassNotFoundException {
+        // Create the layout pull parser.
+        LayoutPullParser parser = LayoutPullParser.createFromString(
+                "<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n" +
+                        "              android:padding=\"16dp\"\n" +
+                        "              android:orientation=\"horizontal\"\n" +
+                        "              android:layout_width=\"match_parent\"\n" +
+                        "              android:layout_height=\"match_parent\">\n" +
+                        "    <ImageView\n" +
+                        "             android:layout_height=\"match_parent\"\n" +
+                        "             android:layout_width=\"match_parent\"\n" +
+                        "             android:src=\"@drawable/gradient\" />\n\n" +
+                        "</LinearLayout>");
+        // Create LayoutLibCallback.
+        LayoutLibTestCallback layoutLibCallback =
+                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
+        layoutLibCallback.initResources();
+
+        SessionParams params = getSessionParamsBuilder()
+                .setParser(parser)
+                .setCallback(layoutLibCallback)
+                .setTheme("Theme.Material.NoActionBar.Fullscreen", false)
+                .setRenderingMode(RenderingMode.V_SCROLL)
+                .disableDecoration()
+                .build();
+
+        renderAndVerify(params, "gradient_colors.png",
                 TimeUnit.SECONDS.toNanos(2));
     }
 
