@@ -962,8 +962,40 @@ public class RenderTests extends RenderTestBase {
     }
 
     @Test
+    public void testShadowFlagsNoShadows() throws Exception {
+        LayoutPullParser parser = createParserFromPath("shadows_test.xml");
+        LayoutLibTestCallback layoutLibCallback =
+                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
+        layoutLibCallback.initResources();
+        layoutLibCallback.setUseShadow(false);
+        SessionParams params = getSessionParamsBuilder()
+                .setParser(parser)
+                .setConfigGenerator(ConfigGenerator.NEXUS_5)
+                .setCallback(layoutLibCallback)
+                .build();
+
+        renderAndVerify(params, "shadows_test_no_shadow.png");
+    }
+
+    @Test
     public void testRectangleShadow() throws Exception {
         renderAndVerify("shadows_test.xml", "shadows_test.png");
+    }
+
+    @Test
+    public void testHighQualityRectangleShadow() throws Exception {
+        LayoutPullParser parser = createParserFromPath("shadows_test.xml");
+        LayoutLibTestCallback layoutLibCallback =
+                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
+        layoutLibCallback.initResources();
+        layoutLibCallback.setShadowQuality(true);
+        SessionParams params = getSessionParamsBuilder()
+                .setParser(parser)
+                .setConfigGenerator(ConfigGenerator.NEXUS_5)
+                .setCallback(layoutLibCallback)
+                .build();
+
+        renderAndVerify(params, "shadows_test_high_quality.png");
     }
 
     @Test
@@ -1393,5 +1425,44 @@ public class RenderTests extends RenderTestBase {
         ViewInfo rootInfo = res.getRootViews().get(0);
         ViewInfo buttonInfo = rootInfo.getChildren().get(0);
         assertEquals(100, buttonInfo.getLeft());
+    }
+
+    /**
+     * Test a vector drawable that uses trimStart and trimEnd. It also tests all the primitives
+     * for vector drawables (lines, moves and cubic and quadratic curves).
+     */
+    @Test
+    public void testCanvas() throws ClassNotFoundException {
+        // Create the layout pull parser.
+        LayoutPullParser parser = LayoutPullParser.createFromString(
+                "<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n" +
+                        "              android:padding=\"16dp\"\n" +
+                        "              android:orientation=\"horizontal\"\n" +
+                        "              android:layout_width=\"fill_parent\"\n" +
+                        "              android:layout_height=\"fill_parent\">\n" +
+                        "    <com.android.layoutlib.test.myapplication.widgets.CanvasTestView\n" +
+                        "             android:layout_height=\"fill_parent\"\n" +
+                        "             android:layout_width=\"fill_parent\"\n" +
+                        "             android:src=\"@drawable/android\" />\n" + "\n" +
+                        "</LinearLayout>");
+        // Create LayoutLibCallback.
+        LayoutLibTestCallback layoutLibCallback =
+                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
+        layoutLibCallback.initResources();
+
+        SessionParams params = getSessionParamsBuilder()
+                .setParser(parser)
+                .setCallback(layoutLibCallback)
+                .setTheme("Theme.Material.NoActionBar.Fullscreen", false)
+                .setRenderingMode(RenderingMode.V_SCROLL)
+                .disableDecoration()
+                .build();
+
+        renderAndVerify(params, "canvas.png", TimeUnit.SECONDS.toNanos(2));
+    }
+
+    @Test
+    public void testTypedArrays() throws ClassNotFoundException, FileNotFoundException {
+        renderAndVerify("typed_array.xml", "typed_arrays.png");
     }
 }

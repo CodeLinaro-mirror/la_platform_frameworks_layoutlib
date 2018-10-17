@@ -18,9 +18,11 @@ package com.android.layoutlib.bridge.impl;
 import com.android.SdkConstants;
 import com.android.ide.common.rendering.api.AssetRepository;
 import com.android.ide.common.rendering.api.DensityBasedResourceValue;
+import com.android.ide.common.rendering.api.ILayoutPullParser;
 import com.android.ide.common.rendering.api.LayoutLog;
 import com.android.ide.common.rendering.api.LayoutlibCallback;
 import com.android.ide.common.rendering.api.RenderResources;
+import com.android.ide.common.rendering.api.ResourceNamespace;
 import com.android.ide.common.rendering.api.ResourceReference;
 import com.android.ide.common.rendering.api.ResourceValue;
 import com.android.internal.util.XmlUtils;
@@ -30,6 +32,7 @@ import com.android.layoutlib.bridge.android.BridgeXmlBlockParser;
 import com.android.ninepatch.NinePatch;
 import com.android.ninepatch.NinePatchChunk;
 import com.android.resources.Density;
+import com.android.resources.ResourceType;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -262,6 +265,7 @@ public final class ResourceHelper {
         }
 
         XmlPullParser parser = null;
+        ResourceNamespace namespace;
 
         LayoutlibCallback layoutlibCallback = context.getLayoutlibCallback();
         // Framework values never need a PSI parser. They do not change and the do not contain
@@ -270,13 +274,16 @@ public final class ResourceHelper {
             parser = layoutlibCallback.getParser(value);
         }
 
-        if (parser == null) {
+        if (parser != null) {
+            namespace = ((ILayoutPullParser) parser).getLayoutNamespace();
+        } else {
             parser = ParserFactory.create(stringValue);
+            namespace = value.getNamespace();
         }
 
         return parser == null
                 ? null
-                : new BridgeXmlBlockParser(parser, context, value.getNamespace());
+                : new BridgeXmlBlockParser(parser, context, namespace);
     }
 
     /**
@@ -321,7 +328,8 @@ public final class ResourceHelper {
             }
 
             return null;
-        } else if (lowerCaseValue.endsWith(".xml") || stringValue.startsWith("@aapt:_aapt/")) {
+        } else if (lowerCaseValue.endsWith(".xml") ||
+                value.getResourceType() == ResourceType.AAPT) {
             // create a block parser for the file
             try {
                 BridgeXmlBlockParser blockParser = getXmlBlockParser(context, value);
