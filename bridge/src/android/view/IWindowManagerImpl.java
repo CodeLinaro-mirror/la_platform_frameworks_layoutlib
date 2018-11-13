@@ -34,8 +34,6 @@ import android.view.RemoteAnimationAdapter;
 import com.android.internal.os.IResultReceiver;
 import com.android.internal.policy.IKeyguardDismissCallback;
 import com.android.internal.policy.IShortcutService;
-import com.android.internal.view.IInputContext;
-import com.android.internal.view.IInputMethodClient;
 
 /**
  * Basic implementation of {@link IWindowManager} so that {@link Display} (and
@@ -162,12 +160,6 @@ public class IWindowManagerImpl implements IWindowManager {
     }
 
     @Override
-    public boolean inputMethodClientHasFocus(IInputMethodClient arg0) throws RemoteException {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
     public boolean isKeyguardLocked() throws RemoteException {
         // TODO Auto-generated method stub
         return false;
@@ -186,8 +178,7 @@ public class IWindowManagerImpl implements IWindowManager {
     }
 
     @Override
-    public IWindowSession openSession(IWindowSessionCallback argn1, IInputMethodClient arg0,
-            IInputContext arg1) throws RemoteException {
+    public IWindowSession openSession(IWindowSessionCallback argn1) throws RemoteException {
         // TODO Auto-generated method stub
         return null;
     }
@@ -290,11 +281,6 @@ public class IWindowManagerImpl implements IWindowManager {
 
     @Override
     public void setEventDispatching(boolean arg0) throws RemoteException {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void setFocusedApp(IBinder arg0, boolean arg1) throws RemoteException {
         // TODO Auto-generated method stub
     }
 
@@ -517,11 +503,11 @@ public class IWindowManagerImpl implements IWindowManager {
         throws RemoteException {}
 
     @Override
-    public void createInputConsumer(IBinder token, String name, InputChannel inputChannel)
-            throws RemoteException {}
+    public void createInputConsumer(IBinder token, String name, int displayId,
+            InputChannel inputChannel) throws RemoteException {}
 
     @Override
-    public boolean destroyInputConsumer(String name) throws RemoteException {
+    public boolean destroyInputConsumer(String name, int displayId) throws RemoteException {
         return false;
     }
 
