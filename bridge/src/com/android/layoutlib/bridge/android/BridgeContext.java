@@ -604,6 +604,7 @@ public class BridgeContext extends Context {
             case AUTOFILL_MANAGER_SERVICE:
             case AUDIO_SERVICE:
             case TEXT_CLASSIFICATION_SERVICE:
+            case INTELLIGENCE_MANAGER_SERVICE:
                 return null;
             default:
                 assert false : "Unsupported Service: " + service;
@@ -1201,6 +1202,12 @@ public class BridgeContext extends Context {
     @Override
     public boolean bindService(Intent arg0, ServiceConnection arg1, int arg2) {
         // pass
+        return false;
+    }
+
+    @Override
+    public boolean bindIsolatedService(Intent arg0,
+            ServiceConnection arg1, int arg2, String arg3) {
         return false;
     }
 
