@@ -154,12 +154,6 @@ public class IWindowManagerImpl implements IWindowManager {
     }
 
     @Override
-    public int getPendingAppTransition() throws RemoteException {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
     public boolean isKeyguardLocked() throws RemoteException {
         // TODO Auto-generated method stub
         return false;
@@ -184,53 +178,10 @@ public class IWindowManagerImpl implements IWindowManager {
     }
 
     @Override
-    public void overridePendingAppTransition(String arg0, int arg1, int arg2,
-            IRemoteCallback startedCallback) throws RemoteException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void overridePendingAppTransitionScaleUp(int startX, int startY, int startWidth,
-            int startHeight) throws RemoteException {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void overridePendingAppTransitionClipReveal(int startX, int startY,
-            int startWidth, int startHeight) throws RemoteException {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void overridePendingAppTransitionThumb(GraphicBuffer srcThumb, int startX, int startY,
-            IRemoteCallback startedCallback, boolean scaleUp) throws RemoteException {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void overridePendingAppTransitionAspectScaledThumb(GraphicBuffer srcThumb, int startX,
-            int startY, int targetWidth, int targetHeight, IRemoteCallback startedCallback,
-            boolean scaleUp) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void overridePendingAppTransitionInPlace(String packageName, int anim) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
     public void overridePendingAppTransitionMultiThumbFuture(
             IAppTransitionAnimationSpecsFuture specsFuture, IRemoteCallback startedCallback,
             boolean scaleUp) throws RemoteException {
 
-    }
-
-    @Override
-    public void overridePendingAppTransitionMultiThumb(AppTransitionAnimationSpec[] specs,
-            IRemoteCallback callback0, IRemoteCallback callback1, boolean scaleUp) {
-        // TODO Auto-generated method stub
     }
 
     @Override
@@ -322,13 +273,6 @@ public class IWindowManagerImpl implements IWindowManager {
     @Override
     public void setInTouchMode(boolean arg0) throws RemoteException {
         // TODO Auto-generated method stub
-    }
-
-    @Override
-    public int[] setNewDisplayOverrideConfiguration(Configuration arg0, int displayId)
-            throws RemoteException {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     @Override
@@ -551,5 +495,63 @@ public class IWindowManagerImpl implements IWindowManager {
 
     @Override
     public void dontOverrideDisplayInfo(int displayId) throws RemoteException {
+    }
+
+    @Override
+    public void freezeDisplayRotation(int displayId, int rotation) throws RemoteException {
+    }
+
+    @Override
+    public void thawDisplayRotation(int displayId) throws RemoteException {
+    }
+
+    @Override
+    public boolean isDisplayRotationFrozen(int displayId) throws RemoteException {
+        return false;
+    }
+
+    @Override
+    public int getWindowingMode(int displayId) throws android.os.RemoteException {
+        return 0;
+    }
+
+    @Override
+    public void setWindowingMode(int displayId, int mode) {
+    }
+
+    @Override
+    public int getRemoveContentMode(int displayId) {
+        return 0;
+    }
+
+    @Override
+    public void setRemoveContentMode(int displayId, int mode) {
+    }
+
+    @Override
+    public boolean shouldShowWithInsecureKeyguard(int displayId) {
+        return false;
+    }
+
+    @Override
+    public void setShouldShowWithInsecureKeyguard(int displayId, boolean shouldShow) {
+    }
+
+    @Override
+    public boolean shouldShowSystemDecors(int displayId) {
+        return false;
+    }
+
+    @Override
+    public void setShouldShowSystemDecors(int displayId, boolean shouldShow) {
+    }
+
+    @Override
+    public boolean shouldShowIme(int displayId) {
+        return false;
+    }
+
+    @Override
+    public void setShouldShowIme(int displayId, boolean shouldShow) {
     }
 }
