@@ -222,6 +222,7 @@ public final class CreateInfo implements ICreateInfo {
         "android.graphics.RenderNode#nGetScaleY",
         "android.graphics.RenderNode#nIsPivotExplicitlySet",
         "android.view.PointerIcon#loadResource",
+        "android.view.PointerIcon#registerDisplayListener",
         "android.view.SurfaceControl#nativeCreateTransaction",
         "android.view.SurfaceControl#nativeGetNativeTransactionFinalizer",
         "android.view.ViewGroup#drawChild",
@@ -352,6 +353,8 @@ public final class CreateInfo implements ICreateInfo {
         "android.animation.PropertyValuesHolder$FloatPropertyValuesHolder#sJNISetterPropertyMap",
         "android.animation.PropertyValuesHolder$MultiFloatValuesHolder#sJNISetterPropertyMap",
         "android.animation.PropertyValuesHolder$MultiIntValuesHolder#sJNISetterPropertyMap",
+        "libcore.util.NativeAllocationRegistry#freeFunction",
+        "libcore.util.NativeAllocationRegistry#size",
     };
 
     /**
@@ -359,6 +362,8 @@ public final class CreateInfo implements ICreateInfo {
      * if possible.
      */
     private final static String[] PROMOTED_CLASSES = new String[] {
+        "libcore.util.NativeAllocationRegistry$CleanerRunner",
+        "libcore.util.NativeAllocationRegistry$CleanerThunk",
     };
 
     /**
