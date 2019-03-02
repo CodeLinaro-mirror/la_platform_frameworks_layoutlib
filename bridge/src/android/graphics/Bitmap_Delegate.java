@@ -47,6 +47,7 @@ import javax.imageio.ImageIO;
 import libcore.util.NativeAllocationRegistry_Delegate;
 
 import static android.content.res.AssetManager.ACCESS_STREAMING;
+import static android.graphics.Bitmap.Config.RGBA_F16;
 
 /**
  * Delegate implementing the native methods of android.graphics.Bitmap
@@ -224,8 +225,7 @@ public final class Bitmap_Delegate {
 
     @LayoutlibDelegate
     /*package*/ static Bitmap nativeCreate(int[] colors, int offset, int stride, int width,
-            int height, int nativeConfig, boolean isMutable, @Nullable float[] xyzD50,
-            @Nullable ColorSpace.Rgb.TransferParameters p) {
+            int height, int nativeConfig, boolean isMutable, long nativeColorSpace) {
         int imageType = getBufferedImageType();
 
         // create the image
@@ -338,6 +338,11 @@ public final class Bitmap_Delegate {
     }
 
     @LayoutlibDelegate
+    /*package*/ static void nativeErase(long nativeBitmap, long colorSpacePtr, long color) {
+        nativeErase(nativeBitmap, Color.toArgb(color));
+    }
+
+    @LayoutlibDelegate
     /*package*/ static int nativeRowBytes(long nativeBitmap) {
         // get the delegate from the native int.
         Bitmap_Delegate delegate = sManager.getDelegate(nativeBitmap);
@@ -357,6 +362,16 @@ public final class Bitmap_Delegate {
         }
 
         return delegate.mConfig.nativeInt;
+    }
+
+    @LayoutlibDelegate
+    /*package*/ static boolean nativeIsConfigF16(long nativeBitmap) {
+        Bitmap_Delegate delegate = sManager.getDelegate(nativeBitmap);
+        if (delegate == null) {
+            return false;
+        }
+
+        return delegate.mConfig == RGBA_F16;
     }
 
     @LayoutlibDelegate
@@ -384,6 +399,11 @@ public final class Bitmap_Delegate {
         }
 
         return delegate.mImage.getRGB(x, y);
+    }
+
+    @LayoutlibDelegate
+    /*package*/ static long nativeGetColor(long nativeBitmap, int x, int y) {
+        return nativeGetPixel(nativeBitmap, x, y);
     }
 
     @LayoutlibDelegate
@@ -626,7 +646,7 @@ public final class Bitmap_Delegate {
 
     @LayoutlibDelegate
     /*package*/ static Bitmap nativeWrapHardwareBufferBitmap(HardwareBuffer buffer,
-            float[] xyzD50, ColorSpace.Rgb.TransferParameters p) {
+            long nativeColorSpace) {
         Bridge.getLog().error(LayoutLog.TAG_UNSUPPORTED,
                 "Bitmap.nativeWrapHardwareBufferBitmap() is not supported", null, null, null);
         return null;
@@ -651,6 +671,12 @@ public final class Bitmap_Delegate {
         Bridge.getLog().error(LayoutLog.TAG_UNSUPPORTED,
                 "Color spaces are not supported", null /*data*/);
         return false;
+    }
+
+    @LayoutlibDelegate
+    /*package*/ static void nativeSetColorSpace(long nativePtr, long nativeColorSpace) {
+        Bridge.getLog().error(LayoutLog.TAG_UNSUPPORTED,
+                "Color spaces are not supported", null /*data*/);
     }
 
     @LayoutlibDelegate
