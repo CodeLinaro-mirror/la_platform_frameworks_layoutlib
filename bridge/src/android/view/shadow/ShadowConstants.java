@@ -31,7 +31,6 @@ class ShadowConstants {
 
     public static final int SPOT_SHADOW_RAYS = 40;
     public static final int SPOT_SHADOW_LAYERS = 1;
-    public static final int SPOT_SHADOW_LIGHT_RADIUS = 50 / SCALE_DOWN;
     public static final int SPOT_SHADOW_LIGHT_SOURCE_POINTS = 4;
     public static final int SPOT_SHADOW_LIGHT_Z_HEIGHT_DP = 50 / SCALE_DOWN;
     public static final int SPOT_SHADOW_LIGHT_Z_EPSILON = 10 / SCALE_DOWN;
@@ -45,4 +44,6 @@ class ShadowConstants {
 
     public static final int COORDINATE_SIZE = 3;
     public static final int RECT_VERTICES_SIZE = 4;
+
+    public static final int SPLICE_ROUNDED_EDGE = 5;
 }
