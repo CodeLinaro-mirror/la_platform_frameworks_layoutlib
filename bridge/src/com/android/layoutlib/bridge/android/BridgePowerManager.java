@@ -41,12 +41,12 @@ public class BridgePowerManager implements IPowerManager {
     }
 
     @Override
-    public boolean setPowerSaveMode(boolean mode) throws RemoteException {
+    public boolean setPowerSaveModeEnabled(boolean mode) throws RemoteException {
         return false;
     }
 
     @Override
-    public boolean setDynamicPowerSavings(boolean dynamicPowerSavingsEnabled, int disableThreshold)
+    public boolean setDynamicPowerSaveHint(boolean powerSaveHint, int disableThreshold)
             throws RemoteException {
         return false;
     }
@@ -63,7 +63,7 @@ public class BridgePowerManager implements IPowerManager {
     }
 
     @Override
-    public int getPowerSaveMode() {
+    public int getPowerSaveModeTrigger() {
         return 0;
     }
 
