@@ -361,8 +361,9 @@ public final class Bridge extends com.android.ide.common.rendering.api.Bridge {
         BridgeAssetManager.clearSystem();
 
         // dispose of the default typeface.
-        Typeface_Delegate.resetDefaults();
-        Typeface.sDynamicTypefaceCache.evictAll();
+        if (sIsTypefaceInitialized) {
+            Typeface.sDynamicTypefaceCache.evictAll();
+        }
         sProject9PatchCache.clear();
         sProjectBitmapCache.clear();
 
@@ -501,10 +502,15 @@ public final class Bridge extends com.android.ide.common.rendering.api.Bridge {
      * will do the clean-up, and make the thread unable to do further scene actions.
      */
     public synchronized static void prepareThread() {
-        // we need to make sure the Looper has been initialized for this thread.
-        // this is required for View that creates Handler objects.
+        // We need to make sure the Looper has been initialized for this thread.
+        // This is required for View that creates Handler objects.
         if (Looper.myLooper() == null) {
-            Looper.prepareMainLooper();
+            synchronized (Looper.class) {
+                // Check if the main looper has been prepared already.
+                if (Looper.getMainLooper() == null) {
+                    Looper.prepareMainLooper();
+                }
+            }
         }
     }
 
