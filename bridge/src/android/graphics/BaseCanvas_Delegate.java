@@ -26,6 +26,8 @@ import com.android.tools.layoutlib.annotations.LayoutlibDelegate;
 
 import android.annotation.Nullable;
 import android.text.TextUtils;
+import android.util.imagepool.ImagePool;
+import android.util.imagepool.ImagePoolProvider;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -76,10 +78,10 @@ public class BaseCanvas_Delegate {
     // ---- native methods ----
 
     @LayoutlibDelegate
-    /*package*/ static void nDrawBitmap(long nativeCanvas, Bitmap bitmap, float left, float top,
+    /*package*/ static void nDrawBitmap(long nativeCanvas, long bitmapHandle, float left, float top,
             long nativePaintOrZero, int canvasDensity, int screenDensity, int bitmapDensity) {
         // get the delegate from the native int.
-        Bitmap_Delegate bitmapDelegate = Bitmap_Delegate.getDelegate(bitmap);
+        Bitmap_Delegate bitmapDelegate = Bitmap_Delegate.getDelegate(bitmapHandle);
         if (bitmapDelegate == null) {
             return;
         }
@@ -94,11 +96,12 @@ public class BaseCanvas_Delegate {
     }
 
     @LayoutlibDelegate
-    /*package*/ static void nDrawBitmap(long nativeCanvas, Bitmap bitmap, float srcLeft, float srcTop,
-            float srcRight, float srcBottom, float dstLeft, float dstTop, float dstRight,
-            float dstBottom, long nativePaintOrZero, int screenDensity, int bitmapDensity) {
+    /*package*/ static void nDrawBitmap(long nativeCanvas, long bitmapHandle, float srcLeft,
+            float srcTop, float srcRight, float srcBottom, float dstLeft, float dstTop,
+            float dstRight, float dstBottom, long nativePaintOrZero, int screenDensity,
+            int bitmapDensity) {
         // get the delegate from the native int.
-        Bitmap_Delegate bitmapDelegate = Bitmap_Delegate.getDelegate(bitmap);
+        Bitmap_Delegate bitmapDelegate = Bitmap_Delegate.getDelegate(bitmapHandle);
         if (bitmapDelegate == null) {
             return;
         }
@@ -113,7 +116,7 @@ public class BaseCanvas_Delegate {
             final float x, final float y, int width, int height, boolean hasAlpha,
             long nativePaintOrZero) {
         // create a temp BufferedImage containing the content.
-        final BufferedImage image = new BufferedImage(width, height,
+        final ImagePool.Image image = ImagePoolProvider.get().acquire(width, height,
                 hasAlpha ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
         image.setRGB(0, 0, width, height, colors, offset, stride);
 
@@ -124,7 +127,7 @@ public class BaseCanvas_Delegate {
                                 RenderingHints.VALUE_INTERPOLATION_BILINEAR);
                     }
 
-                    graphics.drawImage(image, (int) x, (int) y, null);
+                    image.drawImage(graphics, (int) x, (int) y, null);
                 });
     }
 
@@ -467,7 +470,7 @@ public class BaseCanvas_Delegate {
     }
 
     @LayoutlibDelegate
-    /*package*/ static void nDrawBitmapMatrix(long nCanvas, Bitmap bitmap,
+    /*package*/ static void nDrawBitmapMatrix(long nCanvas, long bitmapHandle,
             long nMatrix, long nPaint) {
         // get the delegate from the native int.
         BaseCanvas_Delegate canvasDelegate = sManager.getDelegate(nCanvas);
@@ -479,7 +482,7 @@ public class BaseCanvas_Delegate {
         Paint_Delegate paintDelegate = Paint_Delegate.getDelegate(nPaint);
 
         // get the delegate from the native int.
-        Bitmap_Delegate bitmapDelegate = Bitmap_Delegate.getDelegate(bitmap);
+        Bitmap_Delegate bitmapDelegate = Bitmap_Delegate.getDelegate(bitmapHandle);
         if (bitmapDelegate == null) {
             return;
         }
@@ -505,7 +508,7 @@ public class BaseCanvas_Delegate {
     }
 
     @LayoutlibDelegate
-    /*package*/ static void nDrawBitmapMesh(long nCanvas, Bitmap bitmap,
+    /*package*/ static void nDrawBitmapMesh(long nCanvas, long bitmapHandle,
             int meshWidth, int meshHeight, float[] verts, int vertOffset, int[] colors,
             int colorOffset, long nPaint) {
         // FIXME

@@ -99,7 +99,8 @@ public class Paint_Delegate {
     private float mTextScaleX;
     private float mTextSkewX;
     private int mHintingMode = Paint.HINTING_ON;
-    private int mHyphenEdit;
+    private int mStartHyphenEdit;
+    private int mEndHyphenEdit;
     private float mLetterSpacing;  // not used in actual text rendering.
     private float mWordSpacing;  // not used in actual text rendering.
     // Variant of the font. A paint's variant can only be compact or elegant.
@@ -376,14 +377,23 @@ public class Paint_Delegate {
     }
 
     @LayoutlibDelegate
-    /*package*/ static void nSetColor(long paintPtr, long colorSpaceHandle,
-            float r, float g, float b, float a) {
+    /*package*/ static void nSetColor(long paintPtr, long colorSpaceHandle, long color) {
         Paint_Delegate delegate = sManager.getDelegate(paintPtr);
         if (delegate == null) {
             return;
         }
 
-        delegate.mColor = Color.argb(a, r, g, b);
+        delegate.mColor = Color.toArgb(color);
+    }
+
+    @LayoutlibDelegate
+    /*package*/ static void nSetColor(long paintPtr, int color) {
+        Paint_Delegate delegate = sManager.getDelegate(paintPtr);
+        if (delegate == null) {
+            return;
+        }
+
+        delegate.mColor = color;
     }
 
     @LayoutlibDelegate
@@ -444,7 +454,7 @@ public class Paint_Delegate {
     @LayoutlibDelegate
     /*package*/ static void nSetShadowLayer(long paintPtr,
             float radius, float dx, float dy, long colorSpaceHandle,
-            float r, float g, float b, float a) {
+            long shadowColor) {
         Bridge.getLog().fidelityWarning(LayoutLog.TAG_UNSUPPORTED,
                 "Paint.setShadowLayer is not supported.", null, null /*data*/);
     }
@@ -1080,21 +1090,39 @@ public class Paint_Delegate {
     }
 
     @LayoutlibDelegate
-    /*package*/ static int nGetHyphenEdit(long nativePaint) {
+    /*package*/ static int nGetStartHyphenEdit(long nativePaint) {
         Paint_Delegate delegate = sManager.getDelegate(nativePaint);
         if (delegate == null) {
             return 0;
         }
-        return delegate.mHyphenEdit;
+        return delegate.mStartHyphenEdit;
     }
 
     @LayoutlibDelegate
-    /*package*/ static void nSetHyphenEdit(long nativePaint, int hyphen) {
+    /*package*/ static void nSetStartHyphenEdit(long nativePaint, int hyphen) {
         Paint_Delegate delegate = sManager.getDelegate(nativePaint);
         if (delegate == null) {
             return;
         }
-        delegate.mHyphenEdit = hyphen;
+        delegate.mStartHyphenEdit = hyphen;
+    }
+
+    @LayoutlibDelegate
+    /*package*/ static int nGetEndHyphenEdit(long nativePaint) {
+        Paint_Delegate delegate = sManager.getDelegate(nativePaint);
+        if (delegate == null) {
+            return 0;
+        }
+        return delegate.mEndHyphenEdit;
+    }
+
+    @LayoutlibDelegate
+    /*package*/ static void nSetEndHyphenEdit(long nativePaint, int hyphen) {
+        Paint_Delegate delegate = sManager.getDelegate(nativePaint);
+        if (delegate == null) {
+            return;
+        }
+        delegate.mEndHyphenEdit = hyphen;
     }
 
     @LayoutlibDelegate

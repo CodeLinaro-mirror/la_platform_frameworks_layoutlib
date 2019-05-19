@@ -104,6 +104,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 import static android.os._Original_Build.VERSION_CODES.JELLY_BEAN_MR1;
 import static com.android.layoutlib.bridge.android.RenderParamsFlags.FLAG_KEY_APPLICATION_PACKAGE;
@@ -179,6 +180,7 @@ public class BridgeContext extends Context {
     private PackageManager mPackageManager;
     private Boolean mIsThemeAppCompat;
     private final ResourceNamespace mAppCompatNamespace;
+    private final Map<Key<?>, Object> mUserData = new HashMap<>();
 
     /**
      * Some applications that target both pre API 17 and post API 17, set the newer attrs to
@@ -270,10 +272,15 @@ public class BridgeContext extends Context {
     }
 
     /**
-     * Disposes the {@link Resources} singleton.
+     * Disposes the {@link Resources} singleton and the AssetRepository inside BridgeAssetManager.
      */
     public void disposeResources() {
         Resources_Delegate.disposeSystem();
+
+        // The BridgeAssetManager pointed to by the mAssets field is a long-lived object, but
+        // the AssetRepository is not. To prevent it from leaking clear a reference to it from
+        // the BridgeAssetManager.
+        mAssets.releaseAssetRepository();
     }
 
     public void setBridgeInflater(BridgeInflater inflater) {
@@ -1206,8 +1213,13 @@ public class BridgeContext extends Context {
     }
 
     @Override
+    public boolean bindService(Intent arg0, int arg1, Executor arg2, ServiceConnection arg3) {
+        return false;
+    }
+
+    @Override
     public boolean bindIsolatedService(Intent arg0,
-            ServiceConnection arg1, int arg2, String arg3) {
+            int arg1, String arg2, Executor arg3, ServiceConnection arg4) {
         return false;
     }
 
@@ -2012,6 +2024,40 @@ public class BridgeContext extends Context {
     @Override
     public boolean canLoadUnsafeResources() {
         return true;
+    }
+
+    public <T> void putUserData(@NonNull Key<T> key, @Nullable T data) {
+        mUserData.put(key, data);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Nullable
+    public <T> T getUserData(@NonNull Key<T> key) {
+        return (T) mUserData.get(key);
+    }
+
+    /**
+     * No two Key instances are considered equal.
+     *
+     * @param <T> the type of values associated with the key
+     */
+    public static final class Key<T> {
+        private final String name;
+
+        @NonNull
+        public static <T> Key<T> create(@NonNull String name) {
+            return new Key<T>(name);
+        }
+
+        private Key(@NonNull String name) {
+            this.name = name;
+        }
+
+        /** For debugging only. */
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
     private class AttributeHolder {
