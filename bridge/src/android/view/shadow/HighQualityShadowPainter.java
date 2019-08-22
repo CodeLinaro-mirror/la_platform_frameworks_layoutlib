@@ -28,6 +28,7 @@ import static android.view.shadow.ShadowConstants.MIN_ALPHA;
 import static android.view.shadow.ShadowConstants.SCALE_DOWN;
 
 public class HighQualityShadowPainter {
+    private static final float sRoundedGap = (float) (1.0 - Math.sqrt(2.0) / 2.0);
 
     private HighQualityShadowPainter() { }
 
@@ -66,11 +67,12 @@ public class HighQualityShadowPainter {
 
         // ensure alpha doesn't go over 1
         alpha = (alpha > 1.0f) ? 1.0f : alpha;
+        boolean isOpaque = outline.getAlpha() * alpha == 1.0f;
         float[] poly = getPoly(rectScaled, elevation / SCALE_DOWN, radius);
 
-        paintAmbientShadow(poly, canvas, width, height, alpha, rectOriginal, radius);
+        paintAmbientShadow(poly, canvas, width, height, alpha, rectOriginal, radius, isOpaque);
         paintSpotShadow(poly, rectScaled, elevation / SCALE_DOWN,
-                canvas, densityDpi, width, height, alpha, rectOriginal, radius);
+                canvas, densityDpi, width, height, alpha, rectOriginal, radius, isOpaque);
     }
 
     /**
@@ -99,10 +101,8 @@ public class HighQualityShadowPainter {
      * @param radius
      */
     private static void paintAmbientShadow(float[] polygon, Canvas canvas, int width, int height,
-            float alpha, Rect shadowCasterOutline, float radius) {
+            float alpha, Rect shadowCasterOutline, float radius, boolean isOpaque) {
         // TODO: Consider re-using the triangle buffer here since the world stays consistent.
-        // TODO: Reduce the buffer size based on shadow bounds.
-
         AmbientShadowConfig config = new AmbientShadowConfig.Builder()
                 .setSize(width, height)
                 .setPolygon(polygon)
@@ -122,8 +122,7 @@ public class HighQualityShadowPainter {
 
         drawScaled(
                 canvas, generator.getBitmap(), (int) generator.getTranslateX(),
-                (int) generator.getTranslateY(), width, height,
-                shadowCasterOutline, radius);
+                (int) generator.getTranslateY(), shadowCasterOutline, radius, isOpaque);
     }
 
     /**
@@ -138,7 +137,7 @@ public class HighQualityShadowPainter {
      */
     private static void paintSpotShadow(float[] poly, Rect rectBound, float elevation, Canvas canvas,
             float densityDpi, int width, int height, float alpha, Rect shadowCasterOutline,
-            float radius) {
+            float radius, boolean isOpaque) {
 
         // TODO: Use alpha later
         float lightZHeightPx = ShadowConstants.SPOT_SHADOW_LIGHT_Z_HEIGHT_DP * (densityDpi / DisplayMetrics.DENSITY_DEFAULT);
@@ -172,20 +171,18 @@ public class HighQualityShadowPainter {
         }
 
         drawScaled(canvas, generator.getBitmap(), (int) generator.getTranslateX(),
-                (int) generator.getTranslateY(), width, height, shadowCasterOutline, radius);
+                (int) generator.getTranslateY(), shadowCasterOutline, radius, isOpaque);
     }
 
     /**
      * Draw the bitmap scaled up.
      * @param translateX - offset in x axis by which the bitmap is shifted.
      * @param translateY - offset in y axis by which the bitmap is shifted.
-     * @param width  - scaled width of canvas (parent)
-     * @param height - scaled height of canvas (parent)
      * @param shadowCaster - unscaled outline of shadow caster
      * @param radius
      */
     private static void drawScaled(Canvas canvas, Bitmap bitmap, int translateX, int translateY,
-            int width, int height, Rect shadowCaster, float radius) {
+            Rect shadowCaster, float radius, boolean isOpaque) {
         int unscaledTranslateX = translateX * SCALE_DOWN;
         int unscaledTranslateY = translateY * SCALE_DOWN;
 
@@ -193,11 +190,17 @@ public class HighQualityShadowPainter {
         Rect dest = new Rect(
                 -unscaledTranslateX,
                 -unscaledTranslateY,
-                (width * SCALE_DOWN) - unscaledTranslateX,
-                (height * SCALE_DOWN) - unscaledTranslateY);
-        Rect destSrc = new Rect(0, 0, width, height);
+                (bitmap.getWidth() * SCALE_DOWN) - unscaledTranslateX,
+                (bitmap.getHeight() * SCALE_DOWN) - unscaledTranslateY);
+        Rect destSrc = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
 
-        if (radius > 0) {
+        // We can skip drawing the shadows behind the caster if either
+        // 1) radius is 0, the shadow caster is rectangle and we can have a perfect cut
+        // 2) shadow caster is opaque and even if remove shadow only partially it won't affect
+        // the visual quality, otherwise we will observe shadow part through the translucent caster
+        // This can be improved by:
+        // TODO: do not draw the shadow behind the caster at all during the tesselation phase
+        if (radius > 0 && !isOpaque) {
             // Rounded edge.
             int save = canvas.save();
             canvas.drawBitmap(bitmap, destSrc, dest, null);
@@ -223,7 +226,13 @@ public class HighQualityShadowPainter {
          * dest == top + left + shadow caster + right + bottom
          * Visually, canvas.drawBitmap(bitmap, destSrc, dest, paint) would achieve the same result.
          */
-        Rect left = new Rect(dest.left, shadowCaster.top, shadowCaster.left, shadowCaster.bottom);
+        int gap = (int) Math.ceil(radius * SCALE_DOWN * sRoundedGap);
+        shadowCaster.bottom -= gap;
+        shadowCaster.top += gap;
+        shadowCaster.left += gap;
+        shadowCaster.right -= gap;
+        Rect left = new Rect(dest.left, shadowCaster.top, shadowCaster.left,
+                shadowCaster.bottom);
         int leftScaled = left.width() / SCALE_DOWN + destSrc.left;
 
         Rect top = new Rect(dest.left, dest.top, dest.right, shadowCaster.top);
@@ -231,10 +240,10 @@ public class HighQualityShadowPainter {
 
         Rect right = new Rect(shadowCaster.right, shadowCaster.top, dest.right,
                 shadowCaster.bottom);
-        int rightScaled = (shadowCaster.right + unscaledTranslateX) / SCALE_DOWN + destSrc.left;
+        int rightScaled = (shadowCaster.right - dest.left) / SCALE_DOWN + destSrc.left;
 
         Rect bottom = new Rect(dest.left, shadowCaster.bottom, dest.right, dest.bottom);
-        int bottomScaled = (bottom.bottom - bottom.height()) / SCALE_DOWN + destSrc.top;
+        int bottomScaled = (shadowCaster.bottom - dest.top) / SCALE_DOWN + destSrc.top;
 
         // calculate parts of the middle ground that can be ignored.
         Rect leftSrc = new Rect(destSrc.left, topScaled, leftScaled, bottomScaled);
