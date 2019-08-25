@@ -893,7 +893,7 @@ public class RenderTests extends RenderTestBase {
     }
 
     @Test
-    public void testColorTypedValue() throws Exception {
+    public void testTypedValue() throws Exception {
         // Setup
         // Create the layout pull parser for our resources (empty.xml can not be part of the test
         // app as it won't compile).
@@ -919,6 +919,11 @@ public class RenderTests extends RenderTestBase {
         mContext.resolveThemeAttribute(android.R.attr.colorPrimary, outValue, true);
         assertEquals(TypedValue.TYPE_INT_COLOR_ARGB8, outValue.type);
         assertNotEquals(0, outValue.data);
+
+        outValue = new TypedValue();
+        mContext.resolveThemeAttribute(android.R.attr.isLightTheme, outValue, true);
+        assertEquals(TypedValue.TYPE_INT_BOOLEAN, outValue.type);
+        assertEquals(1, outValue.data);
         assertTrue(sRenderMessages.isEmpty());
     }
 
@@ -1061,77 +1066,6 @@ public class RenderTests extends RenderTestBase {
                 .build();
 
         renderAndVerify(params, "shadows_test.png");
-        // We expect fidelity warnings for Path.isConvex. Fail for anything else.
-        sRenderMessages.removeIf(message -> message.equals("Path.isConvex is not supported."));
-    }
-
-    @Test
-    public void testHighQualityRectangleShadow() throws Exception {
-        LayoutPullParser parser = createParserFromPath("shadows_test.xml");
-        LayoutLibTestCallback layoutLibCallback =
-                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
-        layoutLibCallback.initResources();
-        SessionParams params = getSessionParamsBuilder()
-                .setParser(parser)
-                .setConfigGenerator(ConfigGenerator.NEXUS_5)
-                .setCallback(layoutLibCallback)
-                .disableDecoration()
-                .build();
-
-        renderAndVerify(params, "shadows_test_high_quality.png");
-        // We expect fidelity warnings for Path.isConvex. Fail for anything else.
-        sRenderMessages.removeIf(message -> message.equals("Path.isConvex is not supported."));
-        sRenderMessages.removeIf(message -> message.equals("Font$Builder.nAddAxis is not supported."));
-    }
-
-    @Test
-    public void testHighQualityRoundedEdgeRectangleShadow() throws Exception {
-        LayoutPullParser parser = createParserFromPath("shadows_rounded_edge_test.xml");
-        LayoutLibTestCallback layoutLibCallback =
-                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
-        layoutLibCallback.initResources();
-        SessionParams params = getSessionParamsBuilder()
-                .setParser(parser)
-                .setConfigGenerator(ConfigGenerator.NEXUS_5)
-                .setCallback(layoutLibCallback)
-                .build();
-
-        renderAndVerify(params, "shadows_test_high_quality_rounded_edge.png");
-        // We expect fidelity warnings for Path.isConvex. Fail for anything else.
-        sRenderMessages.removeIf(message -> message.equals("Path.isConvex is not supported."));
-    }
-
-    @Test
-    public void testHighQualityLargeViewShadow() throws Exception {
-        LayoutPullParser parser = createParserFromPath("large_view_shadows_test.xml");
-        LayoutLibTestCallback layoutLibCallback =
-                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
-        layoutLibCallback.initResources();
-        SessionParams params = getSessionParamsBuilder()
-                .setParser(parser)
-                .setConfigGenerator(ConfigGenerator.NEXUS_5)
-                .setCallback(layoutLibCallback)
-                .disableDecoration()
-                .build();
-
-        renderAndVerify(params, "large_shadows_test_high_quality.png");
-        // We expect fidelity warnings for Path.isConvex. Fail for anything else.
-        sRenderMessages.removeIf(message -> message.equals("Path.isConvex is not supported."));
-    }
-
-    @Test
-    public void testHighQualityShadowSizes() throws Exception {
-        LayoutPullParser parser = createParserFromPath("shadow_sizes_test.xml");
-        LayoutLibTestCallback layoutLibCallback =
-                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
-        layoutLibCallback.initResources();
-        SessionParams params = getSessionParamsBuilder()
-                .setParser(parser)
-                .setConfigGenerator(ConfigGenerator.NEXUS_5)
-                .setCallback(layoutLibCallback)
-                .build();
-
-        renderAndVerify(params, "shadow_sizes_test_high_quality.png");
         // We expect fidelity warnings for Path.isConvex. Fail for anything else.
         sRenderMessages.removeIf(message -> message.equals("Path.isConvex is not supported."));
     }

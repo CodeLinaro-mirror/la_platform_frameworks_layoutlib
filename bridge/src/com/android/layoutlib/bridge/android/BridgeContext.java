@@ -91,6 +91,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityManager;
+import android.view.autofill.AutofillManager;
+import android.view.autofill.IAutoFillManager.Default;
+import android.view.inputmethod.InputMethodManager;
 import android.view.textservice.TextServicesManager;
 
 import java.io.File;
@@ -161,6 +164,7 @@ public class BridgeContext extends Context {
     private final LayoutlibCallback mLayoutlibCallback;
     private final WindowManager mWindowManager;
     private final DisplayManager mDisplayManager;
+    private final AutofillManager mAutofillManager;
     private final HashMap<View, Integer> mScrollYPos = new HashMap<>();
     private final HashMap<View, Integer> mScrollXPos = new HashMap<>();
 
@@ -246,6 +250,7 @@ public class BridgeContext extends Context {
 
         mWindowManager = new WindowManagerImpl(mMetrics);
         mDisplayManager = new DisplayManager(this);
+        mAutofillManager = new AutofillManager(this, new Default());
 
         if (mLayoutlibCallback.isResourceNamespacingRequired()) {
             if (mLayoutlibCallback.hasAndroidXAppCompat()) {
@@ -414,6 +419,10 @@ public class BridgeContext extends Context {
             }
             else if (stringValue.charAt(0) == '@') {
                 outValue.type = TypedValue.TYPE_REFERENCE;
+            }
+            else if ("true".equals(stringValue) || "false".equals(stringValue)) {
+                outValue.type = TypedValue.TYPE_INT_BOOLEAN;
+                outValue.data = "true".equals(stringValue) ? 1 : 0;
             }
         }
 
@@ -615,8 +624,12 @@ public class BridgeContext extends Context {
             case ACCESSIBILITY_SERVICE:
                 return AccessibilityManager.getInstance(this);
 
-            case INPUT_METHOD_SERVICE:  // needed by SearchView
+            case INPUT_METHOD_SERVICE:  // needed by SearchView and Compose
+                return InputMethodManager.forContext(this);
+
             case AUTOFILL_MANAGER_SERVICE:
+                return mAutofillManager;
+
             case AUDIO_SERVICE:
             case TEXT_CLASSIFICATION_SERVICE:
             case CONTENT_CAPTURE_MANAGER_SERVICE:
@@ -2056,6 +2069,31 @@ public class BridgeContext extends Context {
     @Nullable
     public <T> T getUserData(@NonNull Key<T> key) {
         return (T) mUserData.get(key);
+    }
+
+    /** Logs an error message to the error log of the host application. */
+    public void error(@NonNull String message, @NonNull String... details) {
+        mLayoutlibCallback.error(message, details);
+    }
+
+    /** Logs an error message to the error log of the host application. */
+    public void error(@NonNull String message, @Nullable Throwable t) {
+        mLayoutlibCallback.error(message, t);
+    }
+
+    /** Logs an error message to the error log of the host application. */
+    public void error(@NonNull Throwable t) {
+        mLayoutlibCallback.error(t);
+    }
+
+    /** Logs a warning to the log of the host application. */
+    public void warn(@NonNull String message, @Nullable Throwable t) {
+        mLayoutlibCallback.warn(message, t);
+    }
+
+    /** Logs a warning to the log of the host application. */
+    public void warn(@NonNull Throwable t) {
+        mLayoutlibCallback.warn(t);
     }
 
     /**
