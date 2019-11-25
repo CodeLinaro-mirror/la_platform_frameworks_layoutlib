@@ -14,30 +14,19 @@
  * limitations under the License.
  */
 
-package com.android.tools.layoutlib.create;
+package com.android.tools.layoutlib.create.dataclass;
 
+import com.android.tools.layoutlib.create.dataclass.OuterClass.StaticInnerClass;
 
-public class MockLog extends Log {
-    StringBuilder mOut = new StringBuilder();
-    StringBuilder mErr = new StringBuilder();
+import java.util.List;
 
-    public String getOut() {
-        return mOut.toString();
-    }
+import com.google.common.collect.Lists;
 
-    public String getErr() {
-        return mErr.toString();
-    }
+public class UsageClass {
+    public UsageClass() {}
 
-    @Override
-    protected void outPrintln(String msg) {
-        mOut.append(msg);
-        mOut.append('\n');
-    }
-
-    @Override
-    protected void errPrintln(String msg) {
-        mErr.append(msg);
-        mErr.append('\n');
+    public int doSomething() {
+        List<Integer> list = Lists.newArrayList(1, 2, 3);
+         return OuterClass.OUTER_CONSTANT + StaticInnerClass.INNER_CONSTANT + OuterClass.useLambdas(list);
     }
 }
