@@ -114,7 +114,7 @@ public class WindowManagerImpl implements WindowManager {
     public WindowMetrics getCurrentWindowMetrics() {
         final Rect bound = getCurrentBounds(mContext);
 
-        return new WindowMetrics(toSize(bound), computeWindowInsets());
+        return new WindowMetrics(bound, computeWindowInsets());
     }
 
     private static Rect getCurrentBounds(Context context) {
@@ -125,11 +125,7 @@ public class WindowManagerImpl implements WindowManager {
 
     @Override
     public WindowMetrics getMaximumWindowMetrics() {
-        return new WindowMetrics(toSize(getMaximumBounds()), computeWindowInsets());
-    }
-
-    private Size toSize(Rect frame) {
-        return new Size(frame.width(), frame.height());
+        return new WindowMetrics(getMaximumBounds(), computeWindowInsets());
     }
 
     private Rect getMaximumBounds() {
