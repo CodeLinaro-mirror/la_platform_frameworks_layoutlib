@@ -32,6 +32,7 @@ import com.android.layoutlib.bridge.Bridge;
 import com.android.layoutlib.bridge.BridgeConstants;
 import com.android.layoutlib.bridge.android.view.WindowManagerImpl;
 import com.android.layoutlib.bridge.impl.ParserFactory;
+import com.android.layoutlib.bridge.impl.ResourceHelper;
 import com.android.layoutlib.bridge.impl.Stack;
 import com.android.resources.ResourceType;
 import com.android.util.Pair;
@@ -66,7 +67,6 @@ import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.hardware.display.DisplayManager;
 import android.net.Uri;
@@ -416,8 +416,20 @@ public class BridgeContext extends Context {
         String stringValue = value.getValue();
         if (!stringValue.isEmpty()) {
             if (stringValue.charAt(0) == '#') {
-                outValue.type = TypedValue.TYPE_INT_COLOR_ARGB8;
-                outValue.data = Color.parseColor(value.getValue());
+                outValue.data = ResourceHelper.getColor(stringValue);
+                switch (stringValue.length()) {
+                    case 4:
+                        outValue.type = TypedValue.TYPE_INT_COLOR_RGB4;
+                        break;
+                    case 5:
+                        outValue.type = TypedValue.TYPE_INT_COLOR_ARGB4;
+                        break;
+                    case 7:
+                        outValue.type = TypedValue.TYPE_INT_COLOR_RGB8;
+                        break;
+                    default:
+                        outValue.type = TypedValue.TYPE_INT_COLOR_ARGB8;
+                }
             }
             else if (stringValue.charAt(0) == '@') {
                 outValue.type = TypedValue.TYPE_REFERENCE;
@@ -1084,7 +1096,7 @@ public class BridgeContext extends Context {
      * Maps a given style to a numeric id.
      *
      * <p>For now Bridge handles numeric ids (both fixed and dynamic) for framework and the callback
-     * for non-framework. TODO(namespaces): teach the IDE about fixed framework ids and handle this
+     * for non-framework. TODO(b/156609434): teach the IDE about fixed framework ids and handle this
      * all in the callback.
      */
     public int getDynamicIdByStyle(StyleResourceValue resValue) {
@@ -1099,7 +1111,7 @@ public class BridgeContext extends Context {
      * Maps a numeric id back to {@link StyleResourceValue}.
      *
      * <p>For now framework numeric ids are handled by Bridge, so try there first and fall back to
-     * the callback, which manages ids for non-framework resources. TODO(namespaces): manage all
+     * the callback, which manages ids for non-framework resources. TODO(b/156609434): manage all
      * ids in the IDE.
      *
      * <p>Once we the resource for the given id, we ask the IDE to get the

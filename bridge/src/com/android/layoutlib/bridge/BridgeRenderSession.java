@@ -154,4 +154,12 @@ public class BridgeRenderSession extends RenderSession {
         }
         mLastResult = lastResult;
     }
+
+    @Override
+    public Object getValidationData() {
+        if (mSession != null) {
+            return mSession.getValidatorResult();
+        }
+        return null;
+    }
 }
