@@ -206,11 +206,14 @@ public final class BridgeTypedArray extends TypedArray {
             return String.valueOf((int) v);
         }
         ResourceValue resourceValue = mResourceData[index];
+        String value = resourceValue.getValue();
         if (resourceValue instanceof TextResourceValue) {
-            String rawString = resourceValue.getRawXmlValue();
-            return Html.fromHtml(rawString, FROM_HTML_MODE_COMPACT);
+            String rawValue = resourceValue.getRawXmlValue();
+            if (rawValue != null && !rawValue.equals(value)) {
+                return Html.fromHtml(rawValue, FROM_HTML_MODE_COMPACT);
+            }
         }
-        return resourceValue.getValue();
+        return value;
     }
 
     /**
@@ -265,7 +268,7 @@ public final class BridgeTypedArray extends TypedArray {
             Bridge.getLog().warning(LayoutLog.TAG_RESOURCES_FORMAT,
                     String.format("\"%1$s\" in attribute \"%2$s\" is not a valid integer",
                             s, mNames[index]),
-                    null);
+                    null, null);
         }
         return defValue;
     }
@@ -288,7 +291,7 @@ public final class BridgeTypedArray extends TypedArray {
             Bridge.getLog().warning(LayoutLog.TAG_RESOURCES_FORMAT,
                     String.format("\"%1$s\" in attribute \"%2$s\" cannot be converted to float.",
                             s, mNames[index]),
-                    null);
+                    null, null);
         }
         return defValue;
     }
@@ -446,7 +449,8 @@ public final class BridgeTypedArray extends TypedArray {
                 // looks like we were unable to resolve the dimension value
                 Bridge.getLog().warning(LayoutLog.TAG_RESOURCES_FORMAT,
                         String.format("\"%1$s\" in attribute \"%2$s\" is not a valid format.",
-                                s, mNames[index]), null);
+                                s, mNames[index]),
+                        null, null);
             }
 
             return defValue;
@@ -477,7 +481,8 @@ public final class BridgeTypedArray extends TypedArray {
             }
 
             Bridge.getLog().warning(LayoutLog.TAG_RESOURCES_FORMAT,
-                    "You must supply a " + name + " attribute.", null);
+                    "You must supply a " + name + " attribute.",
+                    null, null);
 
             return 0;
         }
@@ -548,7 +553,8 @@ public final class BridgeTypedArray extends TypedArray {
         Bridge.getLog().warning(LayoutLog.TAG_RESOURCES_FORMAT,
                 String.format(
                         "\"%1$s\" in attribute \"%2$s\" cannot be converted to a fraction.",
-                        value, mNames[index]), null);
+                        value, mNames[index]),
+                null, null);
 
         return defValue;
     }
