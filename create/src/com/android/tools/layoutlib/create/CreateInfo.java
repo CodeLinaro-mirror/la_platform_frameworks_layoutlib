@@ -169,6 +169,8 @@ public final class CreateInfo implements ICreateInfo {
         "android.graphics.drawable.AdaptiveIconDrawable#<init>",
         "android.graphics.drawable.DrawableInflater#inflateFromClass",
         "android.graphics.FontFamily#addFont",
+        "com.google.android.apps.common.testing.accessibility.framework.uielement" +
+                ".AccessibilityHierarchyAndroid$ViewElementClassNamesAndroid#getClassByName",
         "android.graphics.Typeface#create",
         "android.graphics.Typeface$Builder#createAssetUid",
         "android.graphics.fonts.Font$Builder#createBuffer",
@@ -314,6 +316,7 @@ public final class CreateInfo implements ICreateInfo {
             "android.os.ServiceManager",                       "android.os._Original_ServiceManager",
             "android.view.textservice.TextServicesManager",    "android.view.textservice._Original_TextServicesManager",
             "android.view.SurfaceView",                        "android.view._Original_SurfaceView",
+            "android.view.WindowManagerImpl",                  "android.view._Original_WindowManagerImpl",
             "android.view.accessibility.AccessibilityManager", "android.view.accessibility._Original_AccessibilityManager",
             "android.view.accessibility.AccessibilityNodeIdManager", "android.view.accessibility._Original_AccessibilityNodeIdManager",
             "android.webkit.WebView",                          "android.webkit._Original_WebView",
