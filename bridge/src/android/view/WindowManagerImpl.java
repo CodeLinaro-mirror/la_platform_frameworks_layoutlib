@@ -82,7 +82,7 @@ public class WindowManagerImpl implements WindowManager {
 
     @Override
     public void addView(View arg0, android.view.ViewGroup.LayoutParams arg1) {
-        android.util.SeempLog.record_vg(383, arg1);
+        android.util.SeempLog.record_vg_layout(383, arg1);
         // pass
     }
 
@@ -93,7 +93,7 @@ public class WindowManagerImpl implements WindowManager {
 
     @Override
     public void updateViewLayout(View arg0, android.view.ViewGroup.LayoutParams arg1) {
-        android.util.SeempLog.record_vg(384, arg1);
+        android.util.SeempLog.record_vg_layout(384, arg1);
         // pass
     }
 
