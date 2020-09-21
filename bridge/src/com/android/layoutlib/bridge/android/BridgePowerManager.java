@@ -84,13 +84,14 @@ public class BridgePowerManager implements IPowerManager {
     }
 
     @Override
-    public void acquireWakeLockWithUid(IBinder arg0, int arg1, String arg2, String arg2_5, int arg3)
-            throws RemoteException {
+    public void acquireWakeLockAsync(IBinder arg0, int arg1, String arg2, String arg2_5,
+            WorkSource arg3, String arg4) throws RemoteException {
         // pass for now.
     }
 
     @Override
-    public void powerHint(int hintId, int data) {
+    public void acquireWakeLockWithUid(IBinder arg0, int arg1, String arg2, String arg2_5, int arg3)
+            throws RemoteException {
         // pass for now.
     }
 
@@ -150,7 +151,17 @@ public class BridgePowerManager implements IPowerManager {
     }
 
     @Override
+    public void releaseWakeLockAsync(IBinder arg0, int arg1) throws RemoteException {
+        // pass for now.
+    }
+
+    @Override
     public void updateWakeLockUids(IBinder arg0, int[] arg1) throws RemoteException {
+        // pass for now.
+    }
+
+    @Override
+    public void updateWakeLockUidsAsync(IBinder arg0, int[] arg1) throws RemoteException {
         // pass for now.
     }
 
