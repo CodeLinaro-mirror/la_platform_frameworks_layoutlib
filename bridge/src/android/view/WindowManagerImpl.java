@@ -128,7 +128,7 @@ public class WindowManagerImpl implements WindowManager {
     }
 
     @Override
-    public void setShouldShowIme(int displayId, boolean shouldShow) {
+    public void setDisplayImePolicy(int displayId, int imePolicy) {
         // pass
     }
 
