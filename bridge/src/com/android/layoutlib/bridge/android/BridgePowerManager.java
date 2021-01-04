@@ -17,6 +17,7 @@
 package com.android.layoutlib.bridge.android;
 
 import android.os.BatterySaverPolicyConfig;
+import android.os.ParcelDuration;
 import android.os.IBinder;
 import android.os.IPowerManager;
 import android.os.PowerManager;
@@ -69,6 +70,22 @@ public class BridgePowerManager implements IPowerManager {
 
     public PowerSaveState getPowerSaveState(int serviceType) {
         return null;
+    }
+
+    @Override
+    public void setBatteryDischargePrediction(ParcelDuration timeRemaining,
+            boolean isPersonalized) {
+        // pass for now
+    }
+
+    @Override
+    public ParcelDuration getBatteryDischargePrediction() {
+        return null;
+    }
+
+    @Override
+    public boolean isBatteryDischargePredictionPersonalized() {
+        return false;
     }
 
     @Override
@@ -244,6 +261,11 @@ public class BridgePowerManager implements IPowerManager {
 
     @Override
     public boolean isAmbientDisplaySuppressedForToken(String token) {
+        return false;
+    }
+
+    @Override
+    public boolean isAmbientDisplaySuppressedForTokenByApp(String token, int appUid) {
         return false;
     }
 
