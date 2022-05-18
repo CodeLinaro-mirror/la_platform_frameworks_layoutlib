@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package android.view;
+package android.permission;
 
 import com.android.tools.layoutlib.annotations.LayoutlibDelegate;
 
-import android.graphics.TextureLayer;
+import android.content.pm.PackageManager;
 
-public class TextureView_Delegate {
+public class PermissionManager_Delegate {
+
     @LayoutlibDelegate
-    static TextureLayer getTextureLayer(TextureView thisTextureView) {
-        /*
-         * Currently layoutlib does not support TextureLayers (no OpenGL)
-         */
-        return null;
+    public static int checkPermission(String permission, int pid, int uid) {
+        return PackageManager.PERMISSION_GRANTED;
     }
 }

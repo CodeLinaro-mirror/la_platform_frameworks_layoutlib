@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,24 @@ package android.view;
 
 import com.android.tools.layoutlib.annotations.LayoutlibDelegate;
 
-/**
- * Delegate used to provide new implementation of a select few methods of {@link ViewRootImpl}
- *
- * Through the layoutlib_create tool, the original  methods of ViewRootImpl have been replaced
- * by calls to methods of the same name in this delegate class.
- *
- */
-public class ViewRootImpl_Delegate {
+import static android.view.VelocityTracker.VELOCITY_TRACKER_STRATEGY_IMPULSE;
+
+public class VelocityTracker_Delegate {
 
     @LayoutlibDelegate
-    /*package*/ static boolean isInTouchMode() {
-        return false; // this allows displaying selection.
+    public static VelocityTracker obtain() {
+        // Default VelocityTracker tries to use ApplicationThread which is not supported
+        // by layoutlib. Specify a strategy to work around this issue.
+        return VelocityTracker.obtain(VELOCITY_TRACKER_STRATEGY_IMPULSE);
     }
 
     @LayoutlibDelegate
-    /*package*/ static boolean performHapticFeedback(ViewRootImpl thisViewRoot, int effectId,
-            boolean always) {
-        return false;
+    public static VelocityTracker obtain(String strategy) {
+        return VelocityTracker.obtain_Original(strategy);
+    }
+
+    @LayoutlibDelegate
+    public static VelocityTracker obtain(int strategy) {
+        return VelocityTracker.obtain_Original(strategy);
     }
 }
