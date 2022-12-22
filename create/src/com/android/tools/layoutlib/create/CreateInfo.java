@@ -26,7 +26,6 @@ import org.objectweb.asm.Type;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -255,6 +254,8 @@ public final class CreateInfo implements ICreateInfo {
         "android.text.AndroidCharacter",
         "android.util.Log",
         "android.util.PathParser",
+        "android.view.KeyCharacterMap",
+        "android.view.KeyEvent",
         "android.view.MotionEvent",
         "android.view.Surface",
         "com.android.internal.util.VirtualRefBasePtr",
@@ -328,8 +329,10 @@ public final class CreateInfo implements ICreateInfo {
         "android.graphics.drawable.AnimatedVectorDrawable$VectorDrawableAnimatorRT#mPendingAnimationActions",
         "android.graphics.drawable.AnimatedVectorDrawable#mAnimatorSet",
         "android.graphics.drawable.DrawableInflater#mRes",
+        "android.hardware.input.InputManager#sInstance",
         "android.view.Choreographer#mCallbackQueues", // required for tests only
         "android.view.Choreographer$CallbackQueue#mHead", // required for tests only
+        "android.view.ViewRootImpl#mTmpFrames",
         "com.android.internal.util.ArrayUtils#sCache",
     };
 
@@ -343,6 +346,7 @@ public final class CreateInfo implements ICreateInfo {
         "android.graphics.Bitmap#setNinePatchChunk",
         "android.graphics.Path#nInit",
         "android.graphics.Typeface$Builder#createAssetUid",
+        "android.hardware.input.InputManager#<init>",
         "android.media.ImageReader#nativeClassInit",
         "android.view.Choreographer#doFrame",
         "android.view.Choreographer#postCallbackDelayedInternal",
@@ -376,11 +380,8 @@ public final class CreateInfo implements ICreateInfo {
     private final static String[] DEFERRED_STATIC_INITIALIZER_CLASSES =
             NativeConfig.DEFERRED_STATIC_INITIALIZER_CLASSES;
 
-    private final static Map<String, InjectMethodRunnable> INJECTED_METHODS =
-            new HashMap<String, InjectMethodRunnable>(1) {{
-                put("android.content.Context",
-                        InjectMethodRunnables.CONTEXT_GET_FRAMEWORK_CLASS_LOADER);
-            }};
+    private final static Map<String, InjectMethodRunnable> INJECTED_METHODS = Map.of(
+            "android.content.Context", InjectMethodRunnables.CONTEXT_GET_FRAMEWORK_CLASS_LOADER);
 
     public static class LinkedHashMapEldestReplacer implements MethodReplacer {
 

@@ -61,7 +61,7 @@ public class Main {
         private boolean createStubLib = false;
     }
 
-    public static final int ASM_VERSION = Opcodes.ASM7;
+    public static final int ASM_VERSION = Opcodes.ASM9;
 
     private static final Options sOptions = new Options();
 
@@ -108,6 +108,7 @@ public class Main {
                         "android.*", // for android.R
                         "android.annotation.NonNull",       // annotations
                         "android.annotation.Nullable",      // annotations
+                        "android.app.ApplicationErrorReport", // needed for Glance LazyList
                         "android.app.DatePickerDialog",     // b.android.com/28318
                         "android.app.TimePickerDialog",     // b.android.com/61515
                         "android.content.*",

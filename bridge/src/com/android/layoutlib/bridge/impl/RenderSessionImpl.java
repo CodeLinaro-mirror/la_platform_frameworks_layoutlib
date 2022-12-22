@@ -16,7 +16,6 @@
 
 package com.android.layoutlib.bridge.impl;
 
-import com.android.ide.common.rendering.api.AdapterBinding;
 import com.android.ide.common.rendering.api.HardwareConfig;
 import com.android.ide.common.rendering.api.ILayoutLog;
 import com.android.ide.common.rendering.api.ILayoutPullParser;
@@ -30,6 +29,7 @@ import com.android.ide.common.rendering.api.SessionParams.RenderingMode;
 import com.android.ide.common.rendering.api.SessionParams.RenderingMode.SizeAction;
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.ide.common.rendering.api.ViewType;
+import com.android.internal.R;
 import com.android.internal.view.menu.ActionMenuItemView;
 import com.android.internal.view.menu.BridgeMenuItemImpl;
 import com.android.internal.view.menu.IconMenuItemView;
@@ -44,8 +44,7 @@ import com.android.layoutlib.bridge.android.graphics.NopCanvas;
 import com.android.layoutlib.bridge.android.support.DesignLibUtil;
 import com.android.layoutlib.bridge.android.support.FragmentTabHostUtil;
 import com.android.layoutlib.bridge.android.support.SupportPreferencesUtil;
-import com.android.layoutlib.bridge.impl.binding.FakeAdapter;
-import com.android.layoutlib.bridge.impl.binding.FakeExpandableAdapter;
+import com.android.layoutlib.bridge.util.KeyEventHandling;
 import com.android.tools.idea.validator.LayoutValidator;
 import com.android.tools.idea.validator.ValidatorHierarchy;
 import com.android.tools.idea.validator.ValidatorResult;
@@ -56,6 +55,7 @@ import android.animation.AnimationHandler;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -65,6 +65,8 @@ import android.util.Pair;
 import android.util.TimeUtils;
 import android.view.AttachInfo_Accessor;
 import android.view.BridgeInflater;
+import android.view.InputDevice;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.MeasureSpec;
@@ -73,14 +75,9 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.view.ViewParent;
 import android.view.WindowManagerImpl;
-import android.widget.AbsListView;
-import android.widget.AbsSpinner;
 import android.widget.ActionMenuView;
-import android.widget.AdapterView;
-import android.widget.ExpandableListView;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.QuickContactBadge;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
@@ -362,6 +359,8 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
                     mMeasuredScreenWidth, MeasureSpec.EXACTLY,
                     mMeasuredScreenHeight, MeasureSpec.EXACTLY);
             mViewRoot.layout(0, 0, mMeasuredScreenWidth, mMeasuredScreenHeight);
+            mViewRoot.getViewRootImpl().mTmpFrames.displayFrame.set(mViewRoot.getLeft(),
+                    mViewRoot.getTop(), mViewRoot.getRight(), mViewRoot.getBottom());
             mSystemViewInfoList =
                     visitAllChildren(mViewRoot, 0, 0, params.getExtendedViewInfoMode(),
                     false);
@@ -660,66 +659,6 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
         } else if (view instanceof QuickContactBadge) {
             QuickContactBadge badge = (QuickContactBadge) view;
             badge.setImageToDefault();
-        } else if (view instanceof AdapterView<?>) {
-            // get the view ID.
-            int id = view.getId();
-
-            BridgeContext context = getContext();
-
-            // get a ResourceReference from the integer ID.
-            ResourceReference listRef = context.resolveId(id);
-
-            if (listRef != null) {
-                AdapterBinding binding = layoutlibCallback.getAdapterBinding(
-                            listRef, context.getViewKey(view), view);
-
-                if (binding != null) {
-
-                    if (view instanceof AbsListView) {
-                        if ((binding.getFooterCount() > 0 || binding.getHeaderCount() > 0) &&
-                                view instanceof ListView) {
-                            ListView list = (ListView) view;
-
-                            boolean skipCallbackParser = false;
-
-                            int count = binding.getHeaderCount();
-                            for (int i = 0; i < count; i++) {
-                                Pair<View, Boolean> pair = context.inflateView(
-                                        binding.getHeaderAt(i),
-                                        list, false, skipCallbackParser);
-                                if (pair.first != null) {
-                                    list.addHeaderView(pair.first);
-                                }
-
-                                skipCallbackParser |= pair.second;
-                            }
-
-                            count = binding.getFooterCount();
-                            for (int i = 0; i < count; i++) {
-                                Pair<View, Boolean> pair = context.inflateView(
-                                        binding.getFooterAt(i),
-                                        list, false, skipCallbackParser);
-                                if (pair.first != null) {
-                                    list.addFooterView(pair.first);
-                                }
-
-                                skipCallbackParser |= pair.second;
-                            }
-                        }
-
-                        if (view instanceof ExpandableListView) {
-                            ((ExpandableListView) view).setAdapter(
-                                    new FakeExpandableAdapter(listRef, binding, layoutlibCallback));
-                        } else {
-                            ((AbsListView) view).setAdapter(
-                                    new FakeAdapter(listRef, binding, layoutlibCallback));
-                        }
-                    } else if (view instanceof AbsSpinner) {
-                        ((AbsSpinner) view).setAdapter(
-                                new FakeAdapter(listRef, binding, layoutlibCallback));
-                    }
-                }
-            }
         } else if (view instanceof ViewGroup) {
             mInflater.postInflateProcess(view);
             ViewGroup group = (ViewGroup) view;
@@ -1216,9 +1155,36 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
             currentTimeNanos / TimeUtils.NANOS_PER_MS,
             motionEventType,
             1, mPointerProperties, mPointerCoords,
-            0, 0, 1.0f, 1.0f, 0, 0, 0, 0);
+            0, 0, 1.0f, 1.0f, 0, 0, InputDevice.SOURCE_TOUCHSCREEN, 0);
 
         root.dispatchTouchEvent(event);
+    }
+
+    public void dispatchKeyEvent(java.awt.event.KeyEvent event, long currentTimeNanos) {
+        WindowManagerImpl wm =
+                (WindowManagerImpl)getContext().getSystemService(Context.WINDOW_SERVICE);
+        ViewGroup root = wm.getCurrentRootView();
+        if (root == null) {
+            root = mViewRoot;
+        }
+        if (root == null) {
+            return;
+        }
+        if (event.getID() == java.awt.event.KeyEvent.KEY_PRESSED) {
+            mLastActionDownTimeNanos = currentTimeNanos;
+        }
+        // Ignore events not started with KeyEvent.ACTION_DOWN
+        if (mLastActionDownTimeNanos == -1) {
+            return;
+        }
+
+        KeyEvent androidEvent = KeyEventHandling.javaToAndroidKeyEvent(event,
+                mLastActionDownTimeNanos, currentTimeNanos);
+        boolean success = root.dispatchKeyEvent(androidEvent);
+        if (!success && root != mViewRoot) {
+            // If the event was not consumed by a Window, pass it down to the root layout
+            mViewRoot.dispatchKeyEvent(androidEvent);
+        }
     }
 
     private void disposeImageSurface() {
