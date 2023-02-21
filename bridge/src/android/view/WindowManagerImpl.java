@@ -195,7 +195,7 @@ public class WindowManagerImpl implements WindowManager {
 
     @Override
     public void updateViewLayout(View view, android.view.ViewGroup.LayoutParams params) {
-        android.util.SeempLog.record_vg_layout(384, arg1);
+        android.util.SeempLog.record_vg_layout(384, params);
         if (view == null) {
             throw new IllegalArgumentException("view must not be null");
         }
