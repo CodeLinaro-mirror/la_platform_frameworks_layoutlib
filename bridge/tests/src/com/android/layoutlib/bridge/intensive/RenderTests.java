@@ -2130,4 +2130,70 @@ public class RenderTests extends RenderTestBase {
 
         renderAndVerify(params, "html.png", TimeUnit.SECONDS.toNanos(2));
     }
+
+    @Test
+    public void testStatusBar() throws ClassNotFoundException {
+        final String layout =
+                "<FrameLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n" +
+                        "              android:layout_width=\"match_parent\"\n" +
+                        "              android:layout_height=\"match_parent\">\n" + "\n" +
+                        "    <TextView\n" +
+                        "        android:layout_width=\"wrap_content\"\n" +
+                        "        android:layout_height=\"wrap_content\"\n" +
+                        "        android:text=\"Test status bar colour\"\n" +
+                        "        android:textSize=\"30sp\"/>\n" +
+                        "</FrameLayout>";
+        // Create LayoutLibCallback.
+        LayoutLibTestCallback layoutLibCallback =
+                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
+        layoutLibCallback.initResources();
+
+        SessionParams params = getSessionParamsBuilder()
+                .setParser(LayoutPullParser.createFromString(layout))
+                .setCallback(layoutLibCallback)
+                .setTheme("DarkStatusBarTheme", true)
+                .setRenderingMode(RenderingMode.V_SCROLL)
+                .build();
+
+        renderAndVerify(params, "dark_status_bar.png", TimeUnit.SECONDS.toNanos(2));
+
+        params = getSessionParamsBuilder()
+                .setParser(LayoutPullParser.createFromString(layout))
+                .setCallback(layoutLibCallback)
+                .setTheme("LightStatusBarTheme", true)
+                .setRenderingMode(RenderingMode.V_SCROLL)
+                .build();
+
+        renderAndVerify(params, "light_status_bar.png", TimeUnit.SECONDS.toNanos(2));
+    }
+
+    @Test
+    public void testSoftwareLayer() throws Exception {
+        String layout =
+                "<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n" +
+                        "              android:padding=\"16dp\"\n" +
+                        "              android:orientation=\"horizontal\"\n" +
+                        "              android:layout_width=\"fill_parent\"\n" +
+                        "              android:layout_height=\"fill_parent\">\n" +
+                        "    <com.android.layoutlib.test.myapplication.widgets.SoftwareTextView\n" +
+                        "             android:layout_height=\"200dp\"\n" +
+                        "             android:layout_width=\"wrap_content\" />\n" +
+                        "</LinearLayout>\n";
+        LayoutPullParser parser = LayoutPullParser.createFromString(layout);
+        // Create LayoutLibCallback.
+        LayoutLibTestCallback layoutLibCallback =
+                new LayoutLibTestCallback(getLogger(), mDefaultClassLoader);
+        layoutLibCallback.initResources();
+
+        SessionParams params = getSessionParamsBuilder()
+                .setParser(parser)
+                .setCallback(layoutLibCallback)
+                .setTheme("Theme.Material.Light.NoActionBar.Fullscreen", false)
+                .setRenderingMode(RenderingMode.V_SCROLL)
+                .disableDecoration()
+                .build();
+
+        renderAndVerify(params, "software_layer.png",
+                TimeUnit.SECONDS.toNanos(2));
+    }
 }
