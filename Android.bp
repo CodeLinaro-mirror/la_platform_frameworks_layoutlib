@@ -80,8 +80,13 @@ cc_library_host_shared {
         "libandroid_runtime",
     ],
     static_libs: [
+        "libbase",
+        "libbinder",
+        "libcutils",
         "libhostgraphics",
         "libinput",
+        "libui-types",
+        "libutils",
     ],
     stl: "libc++_static",
     target: {
@@ -89,7 +94,7 @@ cc_library_host_shared {
             version_script: "jni/linux/layoutlib_jni_export.txt",
         },
         darwin: {
-            ldflags: ["-Wl,-exported_symbols_list,frameworks/layoutlib/jni/darwin/layoutlib_jni_export.exp"],
+            exported_symbols_list: "jni/darwin/layoutlib_jni_export.exp",
             dist: {
                 targets: ["layoutlib_jni"],
                 dir: "layoutlib_native/darwin",
