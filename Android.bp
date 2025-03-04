@@ -69,6 +69,7 @@ java_device_for_host {
 cc_library_host_shared {
     name: "layoutlib_jni",
     srcs: [
+        "jni/android_view_LayoutlibRenderer.cpp",
         "jni/LayoutlibLoader.cpp",
     ],
     cflags: [
@@ -76,6 +77,10 @@ cc_library_host_shared {
     ],
     header_libs: [
         "libbase_headers",
+        "libhostgraphics_headers",
+        "libnativebase_headers",
+        "libnativedisplay_headers",
+        "libnativewindow_headers",
     ],
     shared_libs: [
         "libandroid_runtime",
@@ -84,6 +89,7 @@ cc_library_host_shared {
         "libbase",
         "libbinder",
         "libcutils",
+        "libhostgraphics",
         "libinput",
         "libui-types",
         "libutils",

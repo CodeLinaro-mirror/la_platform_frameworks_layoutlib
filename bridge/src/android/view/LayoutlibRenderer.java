@@ -20,25 +20,22 @@ import com.android.internal.lang.System_Delegate;
 
 import android.content.Context;
 import android.graphics.BlendMode;
-import android.graphics.PixelFormat;
 import android.graphics.RecordingCanvas;
-import android.media.Image;
-import android.media.Image.Plane;
-import android.media.ImageReader;
-import android.view.ThreadedRenderer.DrawCallbacks;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
-public class LayoutlibRenderer {
+public class LayoutlibRenderer extends ThreadedRenderer {
 
-    private final ThreadedRenderer mDelegateRenderer;
     private float scaleX = 1.0f;
     private float scaleY = 1.0f;
-    private ImageReader mImageReader;
-    private Image mNativeImage;
+    @SuppressWarnings("unused") // Used by native code
+    private long mNativeContext;
+    /** Buffer in which the rendering will be drawn */
+    private ByteBuffer mBuffer;
 
     LayoutlibRenderer(Context context, boolean translucent, String name) {
-        mDelegateRenderer = new ThreadedRenderer(context, translucent, name);
+        super(context, translucent, name);
     }
 
     public void draw(ViewGroup viewGroup) {
@@ -48,7 +45,7 @@ public class LayoutlibRenderer {
         }
         // Animations require mDrawingTime to be set to animate
         rootView.mAttachInfo.mDrawingTime = System_Delegate.currentTimeMillis();
-        mDelegateRenderer.draw(viewGroup, rootView.mAttachInfo,
+        this.draw(viewGroup, rootView.mAttachInfo,
                 new DrawCallbacks() {
                     @Override
                     public void onPreDraw(RecordingCanvas canvas) {
@@ -63,14 +60,12 @@ public class LayoutlibRenderer {
 
                     }
                 });
-        // Wait for render thread to finish rendering
-        mDelegateRenderer.fence();
     }
 
     public void setScale(float scaleX, float scaleY) {
         this.scaleX = scaleX;
         this.scaleY = scaleY;
-        mDelegateRenderer.invalidateRoot();
+        invalidateRoot();
     }
 
     /**
@@ -82,33 +77,31 @@ public class LayoutlibRenderer {
             return;
         }
 
-        if (mImageReader == null) {
-            mImageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 1);
-            mDelegateRenderer.setSurface(mImageReader.getSurface());
+        // If the surface associated with the ViewRootImpl is not valid,
+        // create a new one.
+        if (!viewRoot.mSurface.isValid()) {
+            Surface surface = nativeCreateSurface();
+            viewRoot.mSurface.transferFrom(surface);
         }
-        mNativeImage = mImageReader.acquireLatestImage();
 
-        mDelegateRenderer.setup(width, height, rootView.mAttachInfo,
-                viewRoot.mWindowAttributes.surfaceInsets);
+        // Create a new buffer to draw the image in, making sure that it is following the native
+        // ordering to work on all platforms.
+        mBuffer = nativeCreateBuffer(width, height);
+        mBuffer.order(ByteOrder.nativeOrder());
+
+        setup(width, height, rootView.mAttachInfo, viewRoot.mWindowAttributes.surfaceInsets);
+        setSurface(viewRoot.mSurface);
     }
 
     public ByteBuffer getBuffer() {
-        Plane[] planes = mNativeImage.getPlanes();
-        return planes[0].getBuffer();
+        return mBuffer;
     }
 
     public void reset() {
-        if (mImageReader != null) {
-            mImageReader.close();
-            mImageReader = null;
-        }
+        mBuffer = null;
     }
 
-    public ThreadedRenderer getThreadedRenderer() {
-        return mDelegateRenderer;
-    }
+    private native Surface nativeCreateSurface();
 
-    public void destroy() {
-        mDelegateRenderer.destroy();
-    }
+    private native ByteBuffer nativeCreateBuffer(int width, int height);
 }
