@@ -268,11 +268,6 @@ public class WindowManagerImpl implements WindowManager {
     }
 
     @Override
-    public void setShouldShowSystemDecors(int displayId, boolean shouldShow) {
-        // pass
-    }
-
-    @Override
     public void setDisplayImePolicy(int displayId, int imePolicy) {
         // pass
     }
