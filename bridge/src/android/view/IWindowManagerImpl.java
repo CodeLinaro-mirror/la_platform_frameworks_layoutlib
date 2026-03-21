@@ -16,7 +16,8 @@
 
 package android.view;
 
-import android.content.res.Configuration;
+import com.android.layoutlib.bridge.impl.BridgeWindowSession;
+
 import android.os.RemoteException;
 import android.util.DisplayMetrics;
 
@@ -30,8 +31,7 @@ public class IWindowManagerImpl extends IWindowManager.Default {
     private final int mRotation;
     private final boolean mHasNavigationBar;
 
-    public IWindowManagerImpl(Configuration config, DisplayMetrics metrics, int rotation,
-            boolean hasNavigationBar) {
+    public IWindowManagerImpl(DisplayMetrics metrics, int rotation, boolean hasNavigationBar) {
         mMetrics = metrics;
         mRotation = rotation;
         mHasNavigationBar = hasNavigationBar;
@@ -54,5 +54,10 @@ public class IWindowManagerImpl extends IWindowManager.Default {
     public boolean hasNavigationBar(int displayId) {
         // TODO(multi-display): Change it once we need it per display.
         return mHasNavigationBar;
+    }
+
+    @Override
+    public IWindowSession openSession(IWindowSessionCallback callback) throws RemoteException {
+        return new BridgeWindowSession(mMetrics);
     }
 }
