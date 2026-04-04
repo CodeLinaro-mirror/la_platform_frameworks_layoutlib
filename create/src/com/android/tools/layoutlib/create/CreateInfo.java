@@ -381,7 +381,7 @@ public final class CreateInfo implements ICreateInfo {
         "android.graphics.Path#nInit",
         "android.graphics.Typeface$Builder#createAssetUid",
         "android.hardware.input.InputManagerGlobal#<init>",
-        "android.view.ViewRootImpl#postTraversalBarrier",
+        "android.view.ViewRootImpl#getRootMeasureSpec",
     };
 
     /**
