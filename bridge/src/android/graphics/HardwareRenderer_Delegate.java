@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package android.app;
+package android.graphics;
 
-import com.android.layoutlib.bridge.impl.RenderAction;
+import com.android.tools.layoutlib.annotations.LayoutlibDelegate;
 
-import android.content.Context;
-
-public class ActivityThread_Delegate {
-    public static Context getSystemUiContext() {
-        return RenderAction.getCurrentContext();
+public class HardwareRenderer_Delegate {
+    @LayoutlibDelegate
+    public static void addObserver(HardwareRenderer thiz, HardwareRendererObserver observer) {
+        thiz.addObserver(observer.getNativeInstance());
     }
 
-    public static Application getApplication(ActivityThread activityThread) {
-        return null;
+    @LayoutlibDelegate
+    public static void addObserver(HardwareRenderer thiz, long nativeObserver) {
+        if (nativeObserver != 0) {
+            thiz.addObserver_Original(nativeObserver);
+        }
     }
 }

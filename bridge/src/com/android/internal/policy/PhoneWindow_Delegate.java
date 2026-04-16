@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package android.app;
+package com.android.internal.policy;
 
-import com.android.layoutlib.bridge.impl.RenderAction;
+import com.android.tools.layoutlib.annotations.LayoutlibDelegate;
 
-import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.res.TypedArray;
 
-public class ActivityThread_Delegate {
-    public static Context getSystemUiContext() {
-        return RenderAction.getCurrentContext();
-    }
-
-    public static Application getApplication(ActivityThread activityThread) {
-        return null;
+public class PhoneWindow_Delegate {
+    @LayoutlibDelegate
+    public static boolean isEdgeToEdgeEnforced(ApplicationInfo info, boolean local,
+            TypedArray windowStyle) {
+        return false;
     }
 }
