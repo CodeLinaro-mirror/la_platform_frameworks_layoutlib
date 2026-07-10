@@ -59,8 +59,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.AnimatedVectorDrawable_VectorDrawableAnimatorUI_Delegate;
-import android.os.Handler_Delegate;
-import android.os.SystemClock;
 import android.preference.Preference_Delegate;
 import android.util.Pair;
 import android.util.TimeUtils;
@@ -1378,18 +1376,15 @@ public class RenderSessionImpl extends RenderAction<SessionParams> {
         disposeImageSurface();
         mNewRenderSize = true;
     }
-
     @Override
     public void dispose() {
         try {
             releaseRender();
             if (mWindowChangeListener != null) {
-                WindowManagerGlobal.getInstance().removeWindowViewsListener(mWindowChangeListener);
+                WindowManagerGlobal.getInstance().mWindowViewsListenerGroup.mListeners
+                        .remove(mWindowChangeListener);
                 mWindowChangeListener = null;
             }
-            // The removal of the window change listener happens through a callback, so this ensures
-            // that the removal actually happens and does not leak.
-            Handler_Delegate.executeCallbacks(SystemClock.uptimeNanos());
             if (mRenderer != null) {
                 mRenderer.destroy();
                 mRenderer = null;

@@ -356,6 +356,7 @@ public final class CreateInfo implements ICreateInfo {
         "android.graphics.drawable.AnimatedVectorDrawable#mAnimatorSet",
         "android.graphics.drawable.DrawableInflater#mRes",
         "android.hardware.input.InputManagerGlobal#sInstance",
+        "android.util.ListenerGroup#mListeners",
         "android.util.Pools$SimplePool#mPool",
         "android.util.Pools$SimplePool#mPoolSize",
         "android.view.Choreographer#mCallbackQueues", // required for tests only
@@ -364,6 +365,7 @@ public final class CreateInfo implements ICreateInfo {
         "android.view.Choreographer$CallbackQueue#mHead", // required for tests only
         "android.view.View#sAlwaysRemeasureExactly",
         "android.view.ViewRootImpl#mTmpFrames",
+        "android.view.WindowManagerGlobal#mWindowViewsListenerGroup",
         "android.view.accessibility.AccessibilityInteractionClient#sCaches",
         "android.view.accessibility.AccessibilityInteractionClient#sClients",
         "android.view.accessibility.AccessibilityInteractionClient#sConnectionCache",

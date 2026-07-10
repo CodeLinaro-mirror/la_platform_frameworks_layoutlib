@@ -164,10 +164,16 @@ public class BridgeRenderSession extends RenderSession {
         try {
             Looper_Accessor.setupThread(mSession);
             mLastResult = mSession.acquire(RenderParams.DEFAULT_TIMEOUT);
-            long currentTimeNanos = System_Delegate.nanoTime();
-            boolean hasMoreCallbacks = Handler_Delegate.executeCallbacks(currentTimeNanos);
-            Choreographer_Delegate.doFrame(currentTimeNanos);
-            return hasMoreCallbacks;
+            if (mLastResult.isSuccess()) {
+                long currentTimeNanos = System_Delegate.nanoTime();
+                boolean hasMoreCallbacks = Handler_Delegate.executeCallbacks(currentTimeNanos);
+                Choreographer_Delegate.doFrame(currentTimeNanos);
+                return hasMoreCallbacks;
+            } else {
+                Bridge.getLog().error(ILayoutLog.TAG_BROKEN, mLastResult.getErrorMessage(),
+                        mLastResult.getException(), null, null);
+                return false;
+            }
         } catch (Throwable t) {
             Bridge.getLog().error(ILayoutLog.TAG_BROKEN, "Failed executing Choreographer#doFrame "
                     , t, null, null);
@@ -204,7 +210,12 @@ public class BridgeRenderSession extends RenderSession {
             try {
                 Looper_Accessor.setupThread(mSession);
                 mLastResult = mSession.acquire(RenderParams.DEFAULT_TIMEOUT);
-                r.run();
+                if (mLastResult.isSuccess()) {
+                    r.run();
+                } else {
+                    Bridge.getLog().error(ILayoutLog.TAG_BROKEN, mLastResult.getErrorMessage(),
+                            mLastResult.getException(), null, null);
+                }
             } finally {
                 mSession.release();
                 Looper_Accessor.cleanupThread();

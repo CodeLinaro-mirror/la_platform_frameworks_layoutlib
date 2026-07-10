@@ -533,20 +533,22 @@ public abstract class RenderAction<T extends RenderParams> {
             sContexts.remove(mContext);
         }
 
-        if (sCurrentContext != null) {
+        if (mContext != null) {
             // quit HandlerThread created during this session.
-            HandlerThread_Delegate.cleanUp(sCurrentContext);
+            HandlerThread_Delegate.cleanUp(mContext);
 
             AnimationHandler animationHandler =
-                    sCurrentContext.getAnimationHandlerThreadLocal().get();
+                    mContext.getAnimationHandlerThreadLocal().get();
             if (animationHandler != null) {
                 animationHandler.mDelayedCallbackStartTime.clear();
                 animationHandler.mAnimationCallbacks.clear();
             }
             // Clear the ThreadLocal to avoid memory leaks
-            sCurrentContext.getAnimationHandlerThreadLocal().remove();
+            mContext.getAnimationHandlerThreadLocal().remove();
         }
 
-        sCurrentContext = null;
+        if (sCurrentContext == mContext) {
+            sCurrentContext = null;
+        }
     }
 }
